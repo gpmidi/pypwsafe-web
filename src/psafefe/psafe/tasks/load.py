@@ -50,7 +50,7 @@ def findSafes(repoByName = None, repoByPK = None):
         repos += [PasswordSafeRepo.objects.filter(name = repo) for repo in repoByName]
     if repoByPK:
         repos += [PasswordSafeRepo.objects.filter(pk = repo) for repo in repoByPK]
-    if len(repos) == 0:
+    if len(repos) == 0 and repoByName is None and repoByPK is None:
         repos = PasswordSafeRepo.objects.all()
     for repo in repos:
         # Don't call as a task since we're already in one
