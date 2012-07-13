@@ -248,6 +248,13 @@ class Record(object):
         # FIXME: Need to implement
         pass
     
+    def todict(self):
+        """ Returns the entry as a json seralizable dict """
+        ret = {}
+        for prop in self.lk.values():
+            ret[prop.rNAME] = prop.get()
+        return ret
+    
 RecordPropTypes = {}
 
 class _RecordPropType(type):
