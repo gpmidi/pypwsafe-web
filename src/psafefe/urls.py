@@ -24,8 +24,10 @@ admin.autodiscover()
 urlpatterns = patterns('',
     # XML-RPC and JSON RPC Access
     (r'^RPC2$', 'rpc4django.views.serve_rpc_request'),
+    # Psafe site - Old way
+    #(r'^psafe(?:/)?', include('psafefe.psafe.urls')),
     # Psafe site
-    (r'^psafe(?:/)?', include('psafefe.psafe.urls')),
+    (r'^pws(?:/)?', include('psafefe.psafe.urls')),
     # Admin site
     (r'^admin/', include(admin.site.urls)),
     # Account junk
