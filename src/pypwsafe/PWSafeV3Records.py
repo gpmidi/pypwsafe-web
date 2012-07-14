@@ -161,10 +161,10 @@ class Record(object):
         self['UUID'] = uuid
     
     def getNote(self):
-        return self['Note']
+        return self['Notes']
     
     def setNote(self, note):
-        self['Note'] = note
+        self['Notes'] = note
     
     def getCreated(self):
         return datetime.datetime(*self['ctime'][:6])
@@ -203,14 +203,14 @@ class Record(object):
         self['URL'] = url
     
     def getAutoType(self):
-        return self['AutoType']
+        return self['Autotype']
     
     def setAutoType(self, autotype):
-        self['AutoType'] = autotype
+        self['Autotype'] = autotype
         
     def getHistory(self):
         ret = []
-        for tm, passwd in self['History']:
+        for tm, passwd in self['PasswordHistory']['history'].items():
             ret.append(dict(
                             password = passwd,
                             saved = datetime.datetime(*tm[:6]),
@@ -219,11 +219,11 @@ class Record(object):
         return ret
     
     def _find_hist(self):
-        if self.lk.has_key("History"):
-            return self.lk['History']
+        if self.lk.has_key("PasswordHistory"):
+            return self.lk['PasswordHistory']
         else:
             for i in RecordPropTypes.values():
-                if i.rNAME == "History":
+                if i.rNAME == "PasswordHistory":
                     return i
 
     def appendHistory(self, oldpw, dt = datetime.datetime.now()):

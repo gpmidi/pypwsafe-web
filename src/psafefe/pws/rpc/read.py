@@ -22,6 +22,7 @@ import logging
 log = logging.getLogger(__name__)
 
 from rpc4django import rpcmethod
+from xmlrpclib import Binary
 from psafefe.pws.rpc.errors import *
 from psafefe.pws.rpc.auth import auth
 from psafefe.pws.models import *
@@ -151,7 +152,7 @@ def getInfoByDevice(username, password, locID, safeID, device, passwords, **kw):
         if entry.has_key('Group'):
             ret['Group'] = entry['Group']
         if entry.has_key("Title"):
-            if entry['Title'] == 'Logins':
+            if entry['Title'] == 'Logins' or entry['Title'] == 'Login':
                 log.debug("Found a login entry: %r" % entry)
                 ret['Logins'][entry['Username']] = entry['Password']
                 continue
@@ -168,4 +169,11 @@ def getInfoByDevice(username, password, locID, safeID, device, passwords, **kw):
         else:
             ret['Other'][entry['Username']] = entry['Password']
     
+    for u,p in ret['Logins'].items():
+        ret['Logins'][u]=Binary(p)
+    for k,v in ret['Info'].items():
+        ret['Info'][k]=Binary(v)
+    for k,v in ret['Other'].items():
+        ret['Other'][k]=Binary(v)
+
     return ret
