@@ -18,34 +18,91 @@
 
 @author: Paulson McIntyre <paul@gpmidi.net>
 '''
-from rpc4django import rpcmethod
-from psafefe.psafe.rpc.errors import *
-from psafefe.psafe.rpc.auth import auth
-from psafefe.psafe.models import *
-from uuid import UUID
+import logging
+log = logging.getLogger(__name__)
 
-# Entry methods
-@rpcmethod(name = 'psafe.read.getEntryByPK', signature = ['struct', 'string', 'string', 'int'])
+from rpc4django import rpcmethod
+from psafefe.pws.rpc.errors import *
+from psafefe.pws.rpc.auth import auth
+from psafefe.pws.models import *
+from psafefe.pws.tasks.device import *
+from uuid import uuid4
+
+@rpcmethod(name = 'psafefe.pws.read.getInfoByUUID', signature = ['struct', 'string', 'string', 'int', 'int', 'string', 'array'])
 @auth
-def get(username, password, entPK, **kw):
-    """ Return a struct representing the requested entry 
+def getInfoByUUID(username, password, locID, safeID, entryUUID, passwords, **kw):
+    """ Return a struct representing the requested entrys
     @param username: Requesting user's login
     @type username: string
     @param password: Requesting user's login
     @type password: string
-    @param entPK: The database id of the entry to return. 
-    @type entPK: int
+    @param locID: PK of the psafe repo to use
+    @type locID: int
+    @param safeID: PK of the entry to return
+    @type safeID: int
+    @param entryUUID: UUID of the entry in string form, with dashes. 
+    @type entryUUID: string  
     @return: A dictionary containing the entities properties
     @raise EntryDoesntExistError: The requested entry doesn't exist or the user doesn't have permission to read it.
+    @raise NoPermissionError: The user doesn't have enough perms to access the given loc
+    @raise InvalidIDError: The PK passed in wasn't found.
+    @note: The repo.updatePSafeList function may need to be run prior to using this function. The DB-based list of psafes and loc must exist and be up-to-date.   
     """
     try:
-        ent = MemPsafeEntry.objects.get(pk = entPK)
-    except MemPsafeEntry.DoesNotExist:
-        raise EntryDoesntExistError
+        loc = PasswordSafeRepo.objects.get(pk = locID)
+    except Exception, e:
+        log.debug("Got %r trying to lookup pk=%r" % (e, locID))
+        raise InvalidIDError, "PK %r not found in repo list" % locID
+    if not loc.user_can_access(user = kw['user'], mode = 'R'):
+        raise NoPermissionError, "%r doens't have read-only access to the given loc" % username
+    try:
+        safe = PasswordSafe.objects.get(pk = safeID)
+    except Exception, e:
+        log.debug("Got %r trying to lookup pk=%r" % (e, safeID))
+        raise InvalidIDError, "PK %r not found in psafe list" % safeID
     
-    repo = ent.safe.safe.repo
-    if repo.user_can_access(kw['user'], mode = "R"):
-        return ent.todict()
+    # Now know the user should have access to it and that it's already known
+    r = lookupByUUID.delay(loc = loc.path, uuid = entryUUID, psafeLoc = safe.filename, passwords = passwords)
+    log.debug("Ran %r" % r)
+    return r.wait()
     
-    # User doesn't have access so it might as well not exist
-    raise EntryDoesntExistError
+@rpcmethod(name = 'psafefe.pws.read.getInfoByDevice', signature = ['struct', 'string', 'string', 'int', 'int', 'string', 'array'])
+@auth
+def getInfoByDevice(username, password, locID, safeID, device, passwords, **kw):
+    """ Return struct representing the requested entrys 
+    @param username: Requesting user's login
+    @type username: string
+    @param password: Requesting user's login
+    @type password: string
+    @param locID: PK of the psafe repo to use
+    @type locID: int
+    @param safeID: PK of the entry to return
+    @type safeID: int
+    @param device: Device FQDN
+    @type device: string/hostname
+    @param passwords: A list of passwords to use when decrypting psafes. 
+    @type passwords: list of strings   
+    @return: A dictionary containing the entities properties
+    @raise EntryDoesntExistError: The requested entry doesn't exist or the user doesn't have permission to read it.
+    @raise NoPermissionError: The user doesn't have enough perms to access the given loc
+    @raise InvalidIDError: The PK passed in wasn't found.
+    @note: The repo.updatePSafeList function may need to be run prior to using this function. The DB-based list of psafes and loc must exist and be up-to-date.  
+    """
+    try:
+        loc = PasswordSafeRepo.objects.get(pk = locID)
+    except Exception, e:
+        log.debug("Got %r trying to lookup pk=%r" % (e, locID))
+        raise InvalidIDError, "PK %r not found in repo list" % locID
+    if not loc.user_can_access(user = kw['user'], mode = 'R'):
+        raise NoPermissionError, "%r doens't have read-only access to the given loc" % username
+    try:
+        safe = PasswordSafe.objects.get(pk = safeID)
+    except Exception, e:
+        log.debug("Got %r trying to lookup pk=%r" % (e, safeID))
+        raise InvalidIDError, "PK %r not found in psafe list" % safeID
+    
+    # Now know the user should have access to it and that it's already known
+    r = lookupByDevice.delay(loc = loc.path, device = device, psafeLoc = safe.filename, passwords = passwords)
+    log.debug("Ran %r" % r)
+    return r.wait()
+    
