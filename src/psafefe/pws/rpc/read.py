@@ -157,13 +157,13 @@ def getInfoByDevice(username, password, locID, safeID, device, passwords, **kw):
                 continue
             elif entry['Title'] == 'Info':
                 log.debug("Found an Info entry: %r" % entry)
-                if entry['Password'] == "See Note":
+                if entry['Password'] == "See Note" and entry.has_key('Note'):
                     ret['Info'][entry['Username']] = entry['Note']
                 else:
                     ret['Info'][entry['Username']] = entry['Password']
                 continue
         log.debug("Found an unknown entry: %r" % entry)
-        if entry['Password'] == "See Note":
+        if entry['Password'] == "See Note" and entry.has_key('Note'):
             ret['Other'][entry['Username']] = entry['Note']
         else:
             ret['Other'][entry['Username']] = entry['Password']
