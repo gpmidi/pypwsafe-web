@@ -31,7 +31,7 @@ from uuid import uuid4
 @rpcmethod(name = 'psafefe.pws.read.getInfoByUUID', signature = ['struct', 'string', 'string', 'int', 'int', 'string', 'array'])
 @auth
 def getInfoByUUID(username, password, locID, safeID, entryUUID, passwords, **kw):
-    """ Return a struct representing the requested entrys
+    """ Return a struct representing the requested entries
     @param username: Requesting user's login
     @type username: string
     @param password: Requesting user's login
@@ -69,7 +69,7 @@ def getInfoByUUID(username, password, locID, safeID, entryUUID, passwords, **kw)
 @rpcmethod(name = 'psafefe.pws.read.getInfoByDevice', signature = ['struct', 'string', 'string', 'int', 'int', 'string', 'array'])
 @auth
 def getInfoByDevice(username, password, locID, safeID, device, passwords, **kw):
-    """ Return struct representing the requested entrys 
+    """ Return struct representing the requested entries 
     @param username: Requesting user's login
     @type username: string
     @param password: Requesting user's login
