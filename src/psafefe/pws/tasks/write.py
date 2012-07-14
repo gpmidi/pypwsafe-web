@@ -18,6 +18,14 @@
 ''' Write tasks for psafe interaction. 
 
 @author: Paulson McIntyre <paul@gpmidi.net>
+
+Common props(aka keys) for info args: 
+    - Port: Management port to connect to
+    - Proto: SSH or other protocol to use for management access. 
+    - Default Login: The primary username to use when picking from the logins.
+    - Compress: True or False indicating if the connection should be compressed. Doesn't apply to all protos.  
+    - SSHPrvKey: A newline separated list of SSH private keys to auth with.  
+    - Host: The hostname/IP to use when connecting to manage the device.  
 '''
 import logging
 log = logging.getLogger(__name__)
@@ -44,6 +52,7 @@ def addUpdateDevice(device, loc, psafeLoc, logins = {}, info = {}, passwords = [
     @param psafeLoc: Full path to the psafe file to edit.   
     @type psafeLoc: string/filepath 
     @return: None 
+    
     """
     safe = None
     for passwd in passwords:
@@ -97,7 +106,11 @@ def addUpdateDevice(device, loc, psafeLoc, logins = {}, info = {}, passwords = [
                 r.setGroup(device.split('.'))
                 r.setTitle('Info')
                 r.setUsername(key_)
-                r.setPassword(val)
+                if '\n' in val:
+                    r.setPassword("See Note")
+                    r.setNote(val)
+                else:
+                    r.setPassword(val)
                 from uuid import uuid4
                 r.setUUID(str(uuid4()))                
                 safe.records.append(r)
