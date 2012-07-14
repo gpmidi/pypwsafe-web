@@ -56,7 +56,7 @@ def updatePSafeList(username, password, locID, passwords, **kw):
     log.debug("Got %r" % r)
     ret = {}
     for safe in r.wait():
-        safe=str(safe)
+        safe = str(safe)
         ret[safe] = getSafe.delay(loc = loc.path, psafeLoc = safe, passwords = passwords)
         try:
             s = PasswordSafe.objects.get(repo = loc, filename = safe)
@@ -68,10 +68,10 @@ def updatePSafeList(username, password, locID, passwords, **kw):
     # Wait for safe fetches
     for safe, info in ret.items():
         ret[safe] = info.wait()
-        for uuid,nfo in ret[safe].items():
-            for k,v in nfo.items():
-                if type(v)==type(''):
-                    nfo[k]=Binary(v)
+        for entryUUID, nfo in ret[safe].items():
+            for k, v in nfo.items():
+                if type(v) == type(''):
+                    nfo[k] = Binary(v)
     return ret
 
 @rpcmethod(name = 'psafefe.pws.repo.updatePSafeOwner', signature = ['int', 'string', 'string', 'int', 'int', 'array'])

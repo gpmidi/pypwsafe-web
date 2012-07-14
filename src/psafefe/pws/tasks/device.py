@@ -29,7 +29,6 @@ from datetime import timedelta
 import os, os.path
 import psafefe.pws.pwcache
 import re
-from base64 import b64decode
 
 @task(ignore_result = False, expires = 60 * 60)
 def lookupByUUID(loc, uuid, psafeLoc, passwords = []):
@@ -112,11 +111,8 @@ def lookupByDevice(device, loc, psafeLoc, passwords = []):
     
     for uuid, entry in safe.items():
         if entry.has_key('Group'):
-            grp=[]
-            for i in entry['Group']:
-                grp.append(b64decode(i))
             log.debug("Checking if %r matches %r" % (entry['Group'], group_match))
-            if group_match.match('.'.join(entry['Group'])):
+            if group_match.match(entry['Group']):
                 log.debug("%r is in the right group" % uuid)
             else:
                 log.debug("%r not it" % uuid)

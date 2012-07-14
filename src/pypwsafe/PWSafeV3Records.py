@@ -249,11 +249,89 @@ class Record(object):
         # FIXME: Need to implement
         pass
     
+    def getPwdPolicy(self):
+        return self['PasswordPolicy']
+    
+    def setPwdPolicy(self, UseLower, UseUpper, UseDigits, UseSymbols, UseHex, UseEasy, MakePronounceable, TotalLen, MinLower, MinUpper, MinDigits, MinSymbols):
+        self['PasswordPolicy'] = dict(
+                                    UseLower = UseLower,
+                                    UseUpper = UseUpper,
+                                    UseDigits = UseDigits,
+                                    UseSymbols = UseSymbols,
+                                    UseHex = UseHex,
+                                    UseEasy = UseEasy,
+                                    MakePronounceable = MakePronounceable,
+                                    TotalLen = TotalLen,
+                                    MinLower = MinLower,
+                                    MinUpper = MinUpper,
+                                    MinDigits = MinDigits,
+                                    MinSymbols = MinSymbols,
+                                    )
+    
+    def getPasswordExpiryInterval(self):
+        return self['PasswordExpiryInterval']
+    
+    def setPasswordExpiryInterval(self, days):
+        self['PasswordExpiryInterval'] = days
+    
+    def getDoubleClickAction(self):
+        return self['DoubleClickAction']
+    
+    def setDoubleClickAction(self, action):
+        self['DoubleClickAction'] = action
+        
+    def getProtectedEntry(self):
+        return self['ProtectedEntry']
+    
+    def setProtectedEntry(self, protected):
+        self['ProtectedEntry'] = bool(protected)
+    
+    def getSymbolsForPassword(self):
+        return self['SymbolsForPassword']
+    
+    def setSymbolsForPassword(self, symbols):
+        self['SymbolsForPassword'] = symbols
+    
+    def getShiftDoubleClickAction(self):
+        return self['ShiftDoubleClickAction']
+    
+    def setShiftDoubleClickAction(self, action):
+        self['ShiftDoubleClickAction'] = action
+    
+    def getPasswordPolicyName(self):
+        return self['PasswordPolicyName']
+    
+    def setPasswordPolicyName(self, name):
+        self['PasswordPolicyName'] = name
+    
     def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        ret = {}
-        for prop in self.lk.values():
-            ret[prop.rNAME] = prop.todict()
+        """ Returns the entry as a json seralizable dict
+        WARNING: May have binary data in strings. 
+        """
+        ret = {
+             'UUID':str(self.getUUID()),
+             'Group':'.'.join(self.getGroup()),
+             'Title':self.getTitle(),
+             'Username':self.getUsername(),
+             'Notes':self.getNote(),
+             'Password':self.getPassword(),
+             'Creation Time':str(self.getCreated()),
+             'Password Last Modified':str(self.getPasswordModified()),
+             'Expires':str(self.getExpires()),
+             'Entry Last Modified':str(self.getEntryModified()),
+             'URL':self.getURL(),
+             'Autotype':self.getAutoType(),
+             'History':self.getHistory(),
+             'Password Policy':self.getPwdPolicy(),
+             'Password Expiry Interval (Days)':self.getPasswordExpiryInterval(),
+             'Double Click Action':self.getDoubleClickAction(),
+             'Email Address':self.getEmail(),
+             'Protected Entry':self.getProtectedEntry(),
+             'Password Symbols':self.getSymbolsForPassword(),
+             'Shift Double Click Action':self.getShiftDoubleClickAction(),
+             'Password Policy Name':self.getPasswordPolicyName(),
+             }
+        
         return ret
     
 RecordPropTypes = {}
@@ -344,10 +422,6 @@ class RecordProp(object):
         padded = self._pad(header + serial)
         psafe_logger.debug("Padded output %s" % repr(padded))
         return padded
-
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return str(self.get())
 
 class UUIDRecordProp(RecordProp):
     """Record's unique id
@@ -442,13 +516,6 @@ class GroupRecordProp(RecordProp):
         #psafe_logger.debug("Serial to %s Data %s"%(repr(self.group_str),repr(self.data)))
         return self.group_str
 
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        ret=[]
-        for i in self.group:
-            ret.append(b64encode(i))
-        return ret
-
 class TitleRecordProp(RecordProp):
     """Record's title
     title        string        Title
@@ -495,10 +562,6 @@ class TitleRecordProp(RecordProp):
         #psafe_logger.debug("Serial to %s data %s"%(repr(self.title),repr(self.data)))
         return self.title
 
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return b64encode(self.get())
-
 class UsernameRecordProp(RecordProp):
     """Record's username
     username    string        ...
@@ -543,10 +606,6 @@ class UsernameRecordProp(RecordProp):
     def serial(self):
         #psafe_logger.debug("Serial to %s data %s"%(repr(self.username),repr(self.data)))
         return self.username
-
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return b64encode(self.get())
 
 class NotesRecordProp(RecordProp):
     """Record notes
@@ -638,10 +697,6 @@ class PasswordRecordProp(RecordProp):
         #psafe_logger.debug("Serial to %s data %s"%(repr(self.password),repr(self.data)))
         return self.password
 
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return b64encode(self.get())
-
 class CreationTimeRecordProp(RecordProp):
     """Record's  ctime
     password    string        ...
@@ -687,10 +742,6 @@ class CreationTimeRecordProp(RecordProp):
         #psafe_logger.debug("Serial to %s data %s"%(repr(makedatetime(self.dt)),repr(self.data)))
         return makedatetime(self.dt)
 
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return str(datetime.datetime(*self.get()[:6]))
-
 class ModTimeRecordProp(RecordProp):
     """Record's  mtime
     password    string        ...
@@ -734,10 +785,6 @@ class ModTimeRecordProp(RecordProp):
     def serial(self):
         #psafe_logger.debug("Serial to %s data %s"%(repr(makedatetime(self.dt)),repr(self.data)))
         return makedatetime(self.dt)
-
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return str(datetime.datetime(*self.get()[:6]))
 
 class LastAccessTimeRecordProp(RecordProp):
     """Record's  ctime
@@ -785,10 +832,6 @@ class LastAccessTimeRecordProp(RecordProp):
         #psafe_logger.debug("Serial to %s data %s"%(repr(makedatetime(self.dt)),repr(self.data)))
         return makedatetime(self.dt)
 
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return str(datetime.datetime(*self.get()[:6]))
-
 class PasswordExpiryTimeRecordProp(RecordProp):
     """Record's  experation time
     password    string        ...
@@ -832,10 +875,6 @@ class PasswordExpiryTimeRecordProp(RecordProp):
     def serial(self):
         #psafe_logger.debug("Serial to %s data %s"%(repr(makedatetime(self.dt)),repr(self.data)))
         return makedatetime(self.dt)
-
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return str(datetime.datetime(*self.get()[:6]))
 
 class LastModificationTimeRecordProp(RecordProp):
     """Record's  experation time
@@ -882,10 +921,6 @@ class LastModificationTimeRecordProp(RecordProp):
         #psafe_logger.debug("Serial to %s data %s"%(repr(makedatetime(self.dt)),repr(self.data)))
         return makedatetime(self.dt)
 
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return str(datetime.datetime(*self.get()[:6]))
-
 class URLRecordProp(RecordProp):
     """Record's URL
     title        string        Title
@@ -929,10 +964,6 @@ class URLRecordProp(RecordProp):
     def serial(self):
         #psafe_logger.debug("Serial to %s data %s"%(repr(self.url),repr(self.data)))
         return self.url
-
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return b64encode(self.get())
 
 class AutotypeRecordProp(RecordProp):
     """Record's title
@@ -978,10 +1009,6 @@ class AutotypeRecordProp(RecordProp):
     def serial(self):
         #psafe_logger.debug("Serial to %s data %s"%(repr(self.autotype),repr(self.data)))
         return self.autotype
-
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return b64encode(self.get())
 
 class PasswordHistoryRecordProp(RecordProp):
     """Record's old passwords
@@ -1135,13 +1162,6 @@ where:
         self.history = []
         for (dt, passwd) in value['history']:
             self.history.append((dt, passwd))
-
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        ret=self.get()
-        for k,v in ret['history'].items():
-            ret['history'][k]=b64encode(v)
-        return ret
 
 class PasswordPolicyRecordProp(RecordProp):
     """Record's title
@@ -1414,10 +1434,6 @@ class RunCommandRecordProp(RecordProp):
         #psafe_logger.debug("Serial to %s data %s"%(repr(self.url),repr(self.data)))
         return self.runCommand
 
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return b64encode(self.get())
-
 class DoubleClickActionRecordProp(RecordProp):
     """ Double click action 
 A two byte field contain the value of the Double-Click Action 'preference 
@@ -1513,10 +1529,6 @@ prefix. This field was introduced in version 0x0306 (PasswordSafe V3.19).
         #psafe_logger.debug("Serial to %s data %s"%(repr(self.url),repr(self.data)))
         return self.emailAddress
 
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return b64encode(self.get())
-    
 class ProtectedEntryRecordProp(RecordProp):
     """ Is the entry protected from being changed/deleted. 
 Entry is protected, i.e., the entry cannot be changed or deleted
@@ -1595,10 +1607,6 @@ set. This field is mutually exclusive with the policy name field
     def serial(self):
         #psafe_logger.debug("Serial to %s data %s"%(repr(self.url),repr(self.data)))
         return self.symbols
-
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return b64encode(self.get())
 
 class ShiftDoubleClickActionRecordProp(RecordProp):
     """ Shift Double click action 
@@ -1696,10 +1704,6 @@ symbols for password field [0x16]. This was introduced in version
     def serial(self):
         #psafe_logger.debug("Serial to %s data %s"%(repr(self.url),repr(self.data)))
         return self.symbols
-
-    def todict(self):
-        """ Returns the entry as a json seralizable dict """
-        return b64encode(self.get())
 
 class EOERecordProp(RecordProp):
     """End of entry
