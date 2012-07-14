@@ -38,32 +38,32 @@ class PasswordSafeRepo(models.Model):
                                            Group,
                                            verbose_name = "Admin Groups",
                                            help_text = "Groups that have administrative access to this repo",
-                                           related_name = "admin_groups_set",
+                                           related_name = "admin_groups_rlt",
                                            )
     readAllowGroups = models.ManyToManyField(
                                                Group,
                                                verbose_name = "Read-Allow Groups",
                                                help_text = "Groups that have read access to this repo",
-                                               related_name = "read_allow_groups_set",
+                                               related_name = "read_allow_groups_rlt",
                                                )
     writeAllowGroups = models.ManyToManyField(
                                                Group,
                                                verbose_name = "Write-Allow Groups",
                                                help_text = "Groups that have write access to this repo",
-                                               related_name = "write_allow_groups_set",
+                                               related_name = "write_allow_groups_rlt",
                                                )
     # These are applied before the allows
     readDenyGroups = models.ManyToManyField(
                                                Group,
                                                verbose_name = "Read-Deny Groups",
                                                help_text = "Groups that do not have read access to this repo. This overrides the read-allow groups list. ",
-                                               related_name = "read_deny_groups_set",
+                                               related_name = "read_deny_groups_rlt",
                                                )
     writeDenyGroups = models.ManyToManyField(
                                                Group,
                                                verbose_name = "Write-Deny Groups",
                                                help_text = "Groups that do not have write access to this repo. This overrides the write-allow groups list. ",
-                                               related_name = "write_deny_groups_set",
+                                               related_name = "write_deny_groups_rlt",
                                                )
     # Helpers
     def _in_group(self, user, group_relate):
@@ -129,6 +129,7 @@ class PasswordSafe(models.Model):
                               null = True,
                               verbose_name = "Owner",
                               help_text = "The owning user of the password safe",
+                              related_name = 'owner_rlt',
                               ) 
     
     def psafePath(self):

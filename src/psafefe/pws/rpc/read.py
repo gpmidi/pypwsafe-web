@@ -105,7 +105,7 @@ def getInfoListByDevice(username, password, locID, safeID, device, passwords, **
     r = lookupByDevice.delay(loc = loc.path, device = device, psafeLoc = safe.filename, passwords = passwords)
     log.debug("Ran %r" % r)
     return r.wait()
-    
+
 @rpcmethod(name = 'psafefe.pws.read.getInfoByDevice', signature = ['struct', 'string', 'string', 'int', 'int', 'string', 'array'])
 @auth
 def getInfoByDevice(username, password, locID, safeID, device, passwords, **kw):

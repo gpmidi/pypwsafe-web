@@ -67,8 +67,10 @@ def getSafe(loc, psafeLoc, passwords):
     if safe:
         ret = {}
         for entry in safe.getEntries():
-            ret[entry.getUUID()] = entry.todict()
+            ret[str(entry.getUUID())] = entry.todict()
             log.debug("Added info for %r" % entry.getUUID())
+            for k,v in ret[str(entry.getUUID())].items():
+                log.debug("K: %r V: %r"%(k,v))
         return ret
     else:
         return {}

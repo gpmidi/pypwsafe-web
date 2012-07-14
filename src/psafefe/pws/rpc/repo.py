@@ -22,6 +22,7 @@ import logging
 log = logging.getLogger(__name__)
 
 from rpc4django import rpcmethod
+from xmlrpclib import Binary
 from psafefe.pws.rpc.errors import *
 from psafefe.pws.rpc.auth import auth
 from psafefe.pws.models import *
@@ -29,7 +30,7 @@ from psafefe.pws.tasks.device import *
 from psafefe.pws.tasks.safe import *
 from uuid import uuid4
 
-@rpcmethod(name = 'psafefe.pws.repo.updatePSafeList', signature = ['array', 'string', 'string', 'int', 'array'])
+@rpcmethod(name = 'psafefe.pws.repo.updatePSafeList', signature = ['struct', 'string', 'string', 'int', 'array'])
 @auth
 def updatePSafeList(username, password, locID, passwords, **kw):
     """ Updates the DB-based list of known psafe files in 
@@ -55,6 +56,7 @@ def updatePSafeList(username, password, locID, passwords, **kw):
     log.debug("Got %r" % r)
     ret = {}
     for safe in r.wait():
+        safe=str(safe)
         ret[safe] = getSafe.delay(loc = loc.path, psafeLoc = safe, passwords = passwords)
         try:
             s = PasswordSafe.objects.get(repo = loc, filename = safe)
@@ -66,6 +68,10 @@ def updatePSafeList(username, password, locID, passwords, **kw):
     # Wait for safe fetches
     for safe, info in ret.items():
         ret[safe] = info.wait()
+        for uuid,nfo in ret[safe].items():
+            for k,v in nfo.items():
+                if type(v)==type(''):
+                    nfo[k]=Binary(v)
     return ret
 
 @rpcmethod(name = 'psafefe.pws.repo.updatePSafeOwner', signature = ['int', 'string', 'string', 'int', 'int', 'array'])
