@@ -193,6 +193,13 @@ def addLoc(loc, passwords = [], passwordLookup = None):
         cache[loc] = PWSLocCache(loc, safePasswords = passwords, passwordLookup = passwordLookup)
     log.debug("Done adding %r" % loc)
 
+def getSafeList(loc, passwords = []):
+    """ Return a list of known psafe files. Runs an update first. """
+    addLoc(loc = loc, passwords = passwords)
+    global cache
+    c = cache[loc]
+    return c.safes.keys()
+
 def getSafe(loc, psafeLoc, passwords = []):
     """ Return the cached (or freshly loaded) psafe from psafeLoc using 
     the given passwords. Returns None if no safe exists or no passwords

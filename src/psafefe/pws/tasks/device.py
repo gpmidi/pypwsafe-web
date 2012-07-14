@@ -91,4 +91,33 @@ def lookupByInfo(loc, psafeLoc, passwords = [], title = None, group = None, user
             del safe[uuid]
     return safe
     
-
+@task(ignore_result = False, expires = 60 * 60)
+def lookupByDevice(device, loc, psafeLoc, passwords = []):
+    """ Find all entries associated with the given device. 
+    @param loc: The filesystem path to the psafe repo. 
+    @type loc: string/file path
+    @param passwords: A list of zero or more passwords to use when decrypting safes. 
+    @type passwords: List of strings
+    @param psafeLoc: Full path to the psafe file to return.   
+    @type psafeLoc: string/filepath 
+    @param device: The hostname of the device to find entrie(s) for. 
+    @type device: string/hostname
+    @return: A list of dicts of entry properties or None if no such entry exists.  
+    """
+    from safe import getSafe
+    safe = getSafe(loc = loc, psafeLoc = psafeLoc, passwords = passwords)
+    
+    group_match = re.compile(r'.*%s$' % device)
+    
+    for uuid, entry in safe.items():
+        if entry.has_key('Group'):
+            log.debug("Checking if %r matches %r" % (entry['Group'], group_match))
+            if group_match.match(entry['Group']):
+                log.debug("%r is in the right group" % uuid)
+            else:
+                log.debug("%r not it" % uuid)
+                del safe[uuid]
+        else:
+            log.debug("%r not it" % uuid)
+            del safe[uuid]
+    return safe

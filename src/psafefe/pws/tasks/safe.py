@@ -31,7 +31,8 @@ import psafefe.pws.pwcache
 
 @task(ignore_result = False, expires = 24 * 60 * 60)
 def addLoc(loc, passwords = []):
-    """ Add a repo where psafes can be loaded 
+    """ Add a repo where psafes can be loaded. When used
+    on an existing repo loc, it updates the cache. 
     @param loc: The filesystem path to the psafe repo. 
     @type loc: string/file path
     @param passwords: A list of zero or more passwords to use when decrypting safes. 
@@ -39,6 +40,17 @@ def addLoc(loc, passwords = []):
     @return: None
     """
     return psafefe.pws.pwcache.addLoc(loc = loc, passwords = passwords, passwordLookup = None)
+
+@task(ignore_result = False, expires = 60 * 60)
+def getSafeList(loc, passwords = []):
+    """ Returns a list of psafes. Runs an cache update first.  
+    @param loc: The filesystem path to the psafe repo. 
+    @type loc: string/file path
+    @param passwords: A list of zero or more passwords to use when decrypting safes. 
+    @type passwords: List of strings
+    @return: List of strings/filepaths
+    """
+    return psafefe.pws.pwcache.getSafeList(loc = loc, passwords = passwords)
     
 @task(ignore_result = False, expires = 60 * 60)
 def getSafe(loc, psafeLoc, passwords):
