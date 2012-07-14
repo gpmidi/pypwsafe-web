@@ -68,3 +68,51 @@ def updatePSafeList(username, password, locID, passwords, **kw):
         ret[safe] = info.wait()
     return ret
 
+@rpcmethod(name = 'psafefe.pws.repo.updatePSafeOwner', signature = ['int', 'string', 'string', 'int', 'int', 'array'])
+@auth
+def updatePSafeOwner(username, password, locID, safeID, passwords, **kw):
+    """ Updates the DB-based list psafe entry such that the
+    calling user is recorded as the owner. 
+    @param username: Requesting user's login
+    @type username: string
+    @param password: Requesting user's login
+    @type password: string
+    @param locID: PK of the psafe repo to use
+    @type locID: int
+    @param safeID: PK of the entry update
+    @type safeID: int
+    @param passwords: A list of passwords to use when decrypting psafes. 
+    @type passwords: list of strings 
+    @return: PK of the psafe
+    @raise NoPermissionError: The user doesn't have enough perms to access the given loc
+    @raise InvalidIDError: The PK passed in wasn't found. 
+    """
+    try:
+        loc = PasswordSafeRepo.objects.get(pk = locID)
+    except Exception, e:
+        log.debug("Got %r trying to lookup pk=%r" % (e, locID))
+        raise InvalidIDError, "PK %r not found in repo list" % locID
+    if not loc.user_can_access(user = kw['user'], mode = 'RW'):
+        raise NoPermissionError, "%r doens't have read/write access to the given loc" % username
+    try:
+        safe = PasswordSafe.objects.get(pk = safeID)
+    except Exception, e:
+        log.debug("Got %r trying to lookup pk=%r" % (e, safeID))
+        raise InvalidIDError, "PK %r not found in psafe list" % safeID
+    
+    # Make sure the user knows the pw to the safe
+    s = getSafe.delay(loc = loc.path, psafeLoc = safe.filename, passwords = passwords)
+    s = s.wait()
+    log.debug("Got %r for %r's info" % (s, safe))
+    if len(s) == 0:        
+        raise BadUsernamePasswordError, "Psafe passwords %r couldn't decrypt given safe" % passwords          
+    
+    safe.owner = kw['user']
+    safe.save()
+    
+    log.debug("Updated %r's owner to %r" % (safe, kw['user']))
+    return safe.pk
+    
+    
+    
+    
