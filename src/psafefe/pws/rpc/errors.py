@@ -40,4 +40,7 @@ class EntryDoesntExistError(NoPermissionError):
     
 class InvalidUUIDError(ValueError):
     """ The UUID given isn't a valid UUID"""
-    
+
+class InvalidIDError(ValueError):
+    """ The given ID doesn't exist. """
+        
