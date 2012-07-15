@@ -132,43 +132,61 @@ class Record(object):
     def getGroup(self):
         return self['Group']
     
-    def setGroup(self, group):
+    def setGroup(self, group, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['Group'] = group
     
     def getTitle(self):
         return self['Title']
     
-    def setTitle(self, title):
+    def setTitle(self, title, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['Title'] = title
     
     def getUsername(self):
         return self['Username']
     
-    def setUsername(self, username):
+    def setUsername(self, username, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['Username'] = username
     
     def getPassword(self):
         return self['Password']
     
-    def setPassword(self, password):
+    def setPassword(self, password, updatePWModified = True, updateEntryModified = True, addToHistory = True):        
+        if updatePWModified:
+            self.setPasswordModified(datetime.datetime.now())
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
+        if addToHistory:
+            self.appendHistory(self.getPassword(), datetime.datetime.now())
         self['Password'] = password
     
     def getUUID(self):
         return self['UUID']
     
-    def setUUID(self, uuid):
+    def setUUID(self, uuid, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['UUID'] = uuid
     
     def getNote(self):
         return self['Notes']
     
-    def setNote(self, note):
+    def setNote(self, note, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['Notes'] = note
     
     def getCreated(self):
         return datetime.datetime(*self['ctime'][:6])
     
-    def setCreated(self, created):
+    def setCreated(self, created, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['ctime'] = created.timetuple()
         
     def getPasswordModified(self):
@@ -192,19 +210,25 @@ class Record(object):
     def getExpires(self):
         return datetime.datetime(*self['PasswordExpiry'][:6])
     
-    def setExpires(self, expires):
+    def setExpires(self, expires, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['PasswordExpiry'] = expires.timetuple()
         
     def getURL(self):
         return self['URL']
     
-    def setURL(self, url):
+    def setURL(self, url, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['URL'] = url
     
     def getAutoType(self):
         return self['Autotype']
     
-    def setAutoType(self, autotype):
+    def setAutoType(self, autotype, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['Autotype'] = autotype
         
     def getHistory(self):
@@ -237,21 +261,25 @@ class Record(object):
     def getRunCommand(self):
         return self['RunCommand']
     
-    def setRunCommand(self, cmd):
+    def setRunCommand(self, cmd, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['RunCommand'] = cmd
     
     def getEmail(self):
-        # FIXME: Need to implement
-        return None
+        return self['EmailAddress']
     
-    def setEmail(self, email):
-        # FIXME: Need to implement
-        pass
+    def setEmail(self, email, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
+        self['EmailAddress'] = email
     
     def getPwdPolicy(self):
         return self['PasswordPolicy']
     
-    def setPwdPolicy(self, UseLower, UseUpper, UseDigits, UseSymbols, UseHex, UseEasy, MakePronounceable, TotalLen, MinLower, MinUpper, MinDigits, MinSymbols):
+    def setPwdPolicy(self, UseLower, UseUpper, UseDigits, UseSymbols, UseHex, UseEasy, MakePronounceable, TotalLen, MinLower, MinUpper, MinDigits, MinSymbols, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['PasswordPolicy'] = dict(
                                     UseLower = UseLower,
                                     UseUpper = UseUpper,
@@ -270,37 +298,49 @@ class Record(object):
     def getPasswordExpiryInterval(self):
         return self['PasswordExpiryInterval']
     
-    def setPasswordExpiryInterval(self, days):
+    def setPasswordExpiryInterval(self, days, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['PasswordExpiryInterval'] = days
     
     def getDoubleClickAction(self):
         return self['DoubleClickAction']
     
-    def setDoubleClickAction(self, action):
+    def setDoubleClickAction(self, action, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['DoubleClickAction'] = action
         
     def getProtectedEntry(self):
         return self['ProtectedEntry']
     
-    def setProtectedEntry(self, protected):
+    def setProtectedEntry(self, protected, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['ProtectedEntry'] = bool(protected)
     
     def getSymbolsForPassword(self):
         return self['SymbolsForPassword']
     
-    def setSymbolsForPassword(self, symbols):
+    def setSymbolsForPassword(self, symbols, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['SymbolsForPassword'] = symbols
     
     def getShiftDoubleClickAction(self):
         return self['ShiftDoubleClickAction']
     
-    def setShiftDoubleClickAction(self, action):
+    def setShiftDoubleClickAction(self, action, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['ShiftDoubleClickAction'] = action
     
     def getPasswordPolicyName(self):
         return self['PasswordPolicyName']
     
-    def setPasswordPolicyName(self, name):
+    def setPasswordPolicyName(self, name, updateEntryModified = True):
+        if updateEntryModified:
+            self.setEntryModified(datetime.datetime.now())
         self['PasswordPolicyName'] = name
     
     def todict(self):
