@@ -25,7 +25,6 @@
 @version: 0.1
 """
 
-from base64 import b64encode
 from struct import unpack, pack
 import calendar, time
 import logging, logging.config
@@ -345,7 +344,7 @@ class _RecordPropType(type):
 
 #     Record Prop
 class RecordProp(object):
-    """A single properity of a psafe3 record. This represents an unknown type or is overridden by records of a known type.
+    """A single property of a psafe3 record. This represents an unknown type or is overridden by records of a known type.
     rTYPE        int        Properity type. May be null.
     rNAME        string        Code name of properity type.
     type        int        Prop type.
