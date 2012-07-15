@@ -20,3 +20,5 @@
 """
 # otherwise they won't be registered. 
 import safe
+import device
+import write
