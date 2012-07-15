@@ -20,12 +20,16 @@ from django.conf.urls.defaults import patterns, include, url #@UnresolvedImport
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin #@UnresolvedImport
 admin.autodiscover()
+from dajaxice.core import dajaxice_autodiscover #@UnresolvedImport
+dajaxice_autodiscover()
+from django.conf import settings
 
 urlpatterns = patterns('',
     # XML-RPC and JSON RPC Access
     (r'^RPC2$', 'rpc4django.views.serve_rpc_request'),
-    # Psafe site - Old way
-    #(r'^psafe(?:/)?', include('psafefe.psafe.urls')),
+    # Dajax
+    (r'^%s/' % settings.DAJAXICE_MEDIA_PREFIX, include('dajaxice.urls')),
+
     # Psafe site
     (r'^pws(?:/)?', include('psafefe.psafe.urls')),
     # Admin site
