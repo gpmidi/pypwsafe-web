@@ -17,10 +17,6 @@
 #===============================================================================
 from django.conf.urls.defaults import patterns, include, url #@UnresolvedImport
 
-# Uncomment the next two lines to enable the admin:
-from django.contrib import admin #@UnresolvedImport
-admin.autodiscover()
-
 urlpatterns = patterns('',
 
 )
