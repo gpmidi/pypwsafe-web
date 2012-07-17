@@ -37,6 +37,8 @@ psafe_logger = logging.getLogger("psafe.lib.record")
 psafe_logger.setLevel(logging.DEBUG)     # FIXME: REMOVE ME
 psafe_logger.debug('initing')
 
+RecordPropTypes = {}
+
 class Record(object):
     """Represents a psafe3 record
     Container item: Name of properity
@@ -242,12 +244,10 @@ class Record(object):
         return ret
     
     def _find_hist(self):
+        if not self.lk.has_key("PasswordHistory"):
+            self["PasswordHistory"] = dict(enabled=True,maxsize=254,history=[])
         if self.lk.has_key("PasswordHistory"):
             return self.lk['PasswordHistory']
-        else:
-            for i in RecordPropTypes.values():
-                if i.rNAME == "PasswordHistory":
-                    return i
 
     def appendHistory(self, oldpw, dt = datetime.datetime.now()):
         history = self._find_hist()
@@ -373,8 +373,6 @@ class Record(object):
         
         return ret
     
-RecordPropTypes = {}
-
 class _RecordPropType(type):
     def __init__(cls, name, bases, dct):
         super(_RecordPropType, cls).__init__(name, bases, dct)
@@ -1087,6 +1085,8 @@ where:
     rTYPE = 0x0f
     rNAME = 'PasswordHistory'
 
+    history = []
+    
     def __init__(self, ptype = None, plen = 0, pdata = None, enabled = 0, maxsize = 255):
         if not ptype:
             ptype = self.rTYPE

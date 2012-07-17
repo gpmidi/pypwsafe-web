@@ -102,7 +102,7 @@ def addUpdateDevice(device, loc, psafeLoc, logins = {}, info = {}, passwords = [
                 r.setTitle('Logins')
                 r.setUsername(username)
                 r.setPassword(password)
-                r.setUUID(str(uuid4()))                
+                r.setUUID(uuid4())                
                 safe.records.append(r)
                 log.debug("Added record %r" % r)
         for key_, val in info.items():
@@ -119,7 +119,7 @@ def addUpdateDevice(device, loc, psafeLoc, logins = {}, info = {}, passwords = [
                     r.setNote(val)
                 else:
                     r.setPassword(val)
-                r.setUUID(str(uuid4()))                
+                r.setUUID(uuid4())                
                 safe.records.append(r)
                 log.debug("Added record %r" % r)
         

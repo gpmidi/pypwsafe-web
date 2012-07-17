@@ -184,28 +184,28 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler'
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '/tmp/debug.log',
-        },
+#        'mail_admins': {
+#            'level': 'ERROR',
+#            'class': 'django.utils.log.AdminEmailHandler'
+#        },
+#        'file': {
+#            'level': 'DEBUG',
+#            'class': 'logging.FileHandler',
+#            'filename': '/tmp/debug.log',
+#        },
         'console':{
             'level':'DEBUG',
             'class':'logging.StreamHandler',
             'stream': sys.stdout,
         },
     },
-#    'loggers': {
-#        'django.request': {
-#            'handlers': ['mail_admins'],
-#            'level': 'ERROR',
-#            'propagate': True,
-#        },
-#    }
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    }
 }
 #            Celery settings
 BROKER_HOST = "localhost"
@@ -230,4 +230,4 @@ RPC4DJANGO_LOG_REQUESTS_RESPONSES = True
 # the passwords to other safes in a safe encrypted with their own password. 
 PSAFE_PERSONAL_PATH = "psafes_personal"
 
-
+DAJAXICE_MEDIA_PREFIX='dajax'
