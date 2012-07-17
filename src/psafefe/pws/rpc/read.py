@@ -169,11 +169,12 @@ def getInfoByDevice(username, password, locID, safeID, device, passwords, **kw):
         else:
             ret['Other'][entry['Username']] = entry['Password']
     
-    for u,p in ret['Logins'].items():
-        ret['Logins'][u]=Binary(p)
-    for k,v in ret['Info'].items():
-        ret['Info'][k]=Binary(v)
-    for k,v in ret['Other'].items():
-        ret['Other'][k]=Binary(v)
+    if kw['request'].META['CONTENT_TYPE']=='text/xml':
+        for u,p in ret['Logins'].items():
+            ret['Logins'][u]=Binary(p)
+        for k,v in ret['Info'].items():
+            ret['Info'][k]=Binary(v)
+        for k,v in ret['Other'].items():
+            ret['Other'][k]=Binary(v)
 
     return ret
