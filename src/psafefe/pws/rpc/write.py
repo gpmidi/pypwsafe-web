@@ -26,7 +26,7 @@ from psafefe.pws.rpc.errors import *
 from psafefe.pws.rpc.auth import auth
 from psafefe.pws.models import *
 from psafefe.pws.tasks.device import *
-from psafefe.pws.tasks.write import *
+import psafefe.pws.tasks.write
 from uuid import uuid4
 
 @rpcmethod(name = 'psafefe.pws.write.addUpdateDevice', signature = ['struct', 'string', 'string', 'int', 'int', 'string', 'array', 'struct', 'struct'])
@@ -68,7 +68,7 @@ def addUpdateDevice(username, password, locID, safeID, device, passwords, entryL
         raise InvalidIDError, "PK %r not found in psafe list" % safeID
     
     # Now know the user should have access to it and that it's already known
-    r = addUpdateDevice.delay(device = device, loc = loc.path, psafeLoc = safe.filename, logins = entryLogins, info = entryInfo, passwords = passwords)
+    r = psafefe.pws.tasks.write.addUpdateDevice.delay(device = device, loc = loc.path, psafeLoc = safe.filename, logins = entryLogins, info = entryInfo, passwords = passwords)
     log.debug("Ran %r" % r)
     return r.wait()
     
@@ -109,7 +109,7 @@ def addUpdateByUUID(username, password, locID, safeID, uuid, passwords, entryInf
         raise InvalidIDError, "PK %r not found in psafe list" % safeID
     
     # Now know the user should have access to it and that it's already known
-    r = addUpdateByUUID.delay(uuid = uuid, loc = loc.path, psafeLoc = safe.filename, info = entryInfo, passwords = passwords)
+    r = psafefe.pws.tasks.write.addUpdateByUUID.delay(uuid = uuid, loc = loc.path, psafeLoc = safe.filename, info = entryInfo, passwords = passwords)
     log.debug("Ran %r" % r)
     return r.wait()
     
