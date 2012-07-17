@@ -107,12 +107,16 @@ def lookupByDevice(device, loc, psafeLoc, passwords = []):
     from safe import getSafe
     safe = getSafe(loc = loc, psafeLoc = psafeLoc, passwords = passwords)
     
-    group_match = re.compile(r'.*%s$' % device)
+    s = device.split('/')
+    device_full = s[-1].split('.')
+    device_host = device_full[0]
+    
+    group_match = '.'.join(s[:-1]+[device_host,])
     
     for uuid, entry in safe.items():
         if entry.has_key('Group'):
             log.debug("Checking if %r matches %r" % (entry['Group'], group_match))
-            if group_match.match(entry['Group']):
+            if group_match == entry['Group']:
                 log.debug("%r is in the right group" % uuid)
             else:
                 log.debug("%r not it" % uuid)

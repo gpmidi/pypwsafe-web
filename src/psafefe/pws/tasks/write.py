@@ -35,6 +35,7 @@ from pypwsafe import PWSafe3, ispsafe3, Record
 import stat
 from datetime import timedelta
 import os, os.path
+from uuid import uuid4
 
 @task(ignore_result = False, expires = 24 * 60 * 60)
 def addUpdateDevice(device, loc, psafeLoc, logins = {}, info = {}, passwords = []):
@@ -70,8 +71,16 @@ def addUpdateDevice(device, loc, psafeLoc, logins = {}, info = {}, passwords = [
         # Existing entries
         eeLogins = {}
         eeInfo = {}
+        
+        # Determine the group name
+        s = device.split('/')
+        deviceFull = s[-1].split('.')
+        deviceHost = deviceFull[0]     
+        groupList = s[:-1]+[deviceHost,]       
+        groupMatch = '.'.join(groupList)
+        
         for record in safe.getEntries():
-            if '.'.join(record.getGroup()) == device:
+            if '.'.join(record.getGroup()) == groupMatch:
                 log.debug("Found a record that is in the device's group: %r" % record)
                 if record.getTitle() == 'Logins':
                     log.debug("Found login %r" % record.getUsername())
@@ -89,11 +98,10 @@ def addUpdateDevice(device, loc, psafeLoc, logins = {}, info = {}, passwords = [
                 log.debug("Set %r to %r" % (eeLogins[username], password))
             else:
                 r = Record()
-                r.setGroup(device.split('.'))
+                r.setGroup(groupList)
                 r.setTitle('Logins')
                 r.setUsername(username)
                 r.setPassword(password)
-                from uuid import uuid4
                 r.setUUID(str(uuid4()))                
                 safe.records.append(r)
                 log.debug("Added record %r" % r)
@@ -103,7 +111,7 @@ def addUpdateDevice(device, loc, psafeLoc, logins = {}, info = {}, passwords = [
                 log.debug("Set %r to %r" % (eeInfo[key_], val))
             else:
                 r = Record()
-                r.setGroup(device.split('.'))
+                r.setGroup(groupList)
                 r.setTitle('Info')
                 r.setUsername(key_)
                 if '\n' in val:
@@ -111,7 +119,6 @@ def addUpdateDevice(device, loc, psafeLoc, logins = {}, info = {}, passwords = [
                     r.setNote(val)
                 else:
                     r.setPassword(val)
-                from uuid import uuid4
                 r.setUUID(str(uuid4()))                
                 safe.records.append(r)
                 log.debug("Added record %r" % r)
@@ -133,7 +140,7 @@ def addUpdateByUUID(loc, uuid, psafeLoc, passwords = [], info = {}):
     @type passwords: List of strings
     @param uuid: UUID of the entry. Will be created if it doesn't already exist. If there are multiple matches then only one will be updated. 
     @type uuid: string/uuid 
-    @param info: A dict of properities to save. Must match Record object props.  
+    @param info: A dict of properties to save. Must match Record object props.  
     @type info: dict  
     @return: None 
     """
