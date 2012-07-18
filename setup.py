@@ -12,6 +12,14 @@ VERSION = "0.1"
 import os
 sys.path.append('src')
 
+def wlk(drs):
+	ret=[]
+	for dr in drs:
+		for (dirpath, dirnames, filenames) in os.walk(dr):
+			print repr(dirpath)
+			ret.append(('share/psafefe/'+dirpath,map(lambda fil: "%s/%s"%(dirpath,fil),filenames)))
+	return ret
+
 setup(name = "python-pypwsafe",
       version = VERSION,
       description = "Python interface to Password Safe files",
@@ -25,6 +33,10 @@ Python interface to Password Safe files.
       url = 'https://github.com/ronys/pypwsafe',
       packages = [
                 'pypwsafe',
+		'psafefe',
+		'psafefe.pws',
+		'psafefe.pws.rpc',
+		'psafefe.pws.tasks',
                   ],
       package_dir = {
                    '':'src',
@@ -32,4 +44,9 @@ Python interface to Password Safe files.
       scripts = [
                  "psafedump",
                  ],
+      data_files = wlk([
+			'media',
+			'templates',
+			'static',
+			])
       )

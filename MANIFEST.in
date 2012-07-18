@@ -1,2 +1,3 @@
 include LICENSE README
 recursive-include src/ *
+recursive-include media templates static
