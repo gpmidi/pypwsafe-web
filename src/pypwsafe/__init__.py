@@ -144,6 +144,7 @@ class PWSafe3(object):
         """   
         log.debug('Creating psafe %s' % repr(filename))
         self.locked = False
+        filename = os.path.realpath(filename)
         psafe_exists = os.access(filename, os.F_OK)
         psafe_canwrite = os.access(filename, os.W_OK)
         psafe_canwritebase = os.access(os.path.dirname(filename), os.W_OK)
