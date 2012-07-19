@@ -23,7 +23,7 @@ will work.
 @author: Paulson McIntyre <paul@gpmidi.net>
 '''
 from django.contrib.auth import authenticate
-from psafefe.psafe.rpc.errors import *
+from psafefe.pws.rpc.errors import *
 
 def _auth(username, password):
     user = authenticate(username = username, password = password)
