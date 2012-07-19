@@ -30,6 +30,7 @@ Python interface to Password Safe files.
                    '':'src',
                      },
       scripts = [
+                 "pwsafecli/pwsafecli.py",
                  "psafedump",
                  ],
       )
