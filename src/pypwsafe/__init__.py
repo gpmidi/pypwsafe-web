@@ -206,6 +206,9 @@ class PWSafe3(object):
             self.headers = []
             self.hmacreq = []
             self.records = []
+            # Add EOF headers
+            self.headers.append(EOFHeader())
+            self.records.append(EOERecordProp())
 
     def __len__(self):
         return len(self.records)
