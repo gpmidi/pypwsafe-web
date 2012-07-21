@@ -215,6 +215,8 @@ class PWSafe3(object):
         self.setUUID()
         self.setLastSaveApp('pypwsafe')
         self.setTimeStampOfLastSave(datetime.datetime.now())
+        self.setLastSaveHost()
+        self.setLastSaveUser()
 
     def __len__(self):
         return len(self.records)
@@ -506,7 +508,9 @@ class PWSafe3(object):
                 return hdr.uuid
         return uuid4()
     
-    def setUUID(self, uuid = None):        
+    def setUUID(self, uuid = None, updateAutoData = True):
+        if updateAutoData:
+            self.autoUpdateHeaders()        
         for hdr in self.headers:
             if type(hdr) == UUIDHeader:
                 hdr.uuid = str(uuid)
@@ -522,8 +526,10 @@ class PWSafe3(object):
             if type(hdr) == VersionHeader:
                 return hdr.version
     
-    def setVersion(self, version = None):
+    def setVersion(self, version = None, updateAutoData = True):
         """Return the safe's version"""
+        if updateAutoData:
+            self.autoUpdateHeaders()
         for hdr in self.headers:
             if type(hdr) == VersionHeader:
                 hdr.version = version
@@ -538,7 +544,9 @@ class PWSafe3(object):
             if type(hdr) == TimeStampOfLastSaveHeader:
                 return hdr.lastsave
     
-    def setTimeStampOfLastSave(self, timestamp):
+    def setTimeStampOfLastSave(self, timestamp, updateAutoData = True):
+        if updateAutoData:
+            self.autoUpdateHeaders()
         for hdr in self.headers:
             if type(hdr) == TimeStampOfLastSaveHeader:
                 hdr.lastsave = timestamp.timetuple()
@@ -550,7 +558,9 @@ class PWSafe3(object):
             if type(hdr) == LastSaveAppHeader:
                 return hdr.lastSafeApp
     
-    def setLastSaveApp(self, app):
+    def setLastSaveApp(self, app, updateAutoData = True):
+        if updateAutoData:
+            self.autoUpdateHeaders()
         for hdr in self.headers:
             if type(hdr) == LastSaveAppHeader:
                 hdr.lastSafeApp = app
@@ -562,7 +572,12 @@ class PWSafe3(object):
             if type(hdr) == LastSaveUserHeader:
                 return hdr.username
     
-    def setLastSaveUser(self, username):
+    def setLastSaveUser(self, username = None, updateAutoData = True):
+        if updateAutoData:
+            self.autoUpdateHeaders()
+        if not username:
+            import getpass
+            username = getpass.getuser()
         for hdr in self.headers:
             if type(hdr) == LastSaveUserHeader:
                 hdr.username = username
@@ -574,7 +589,11 @@ class PWSafe3(object):
             if type(hdr) == LastSaveHostHeader:
                 return hdr.hostname
     
-    def setLastSaveHost(self, hostname):
+    def setLastSaveHost(self, hostname = None, updateAutoData = True):
+        if updateAutoData:
+            self.autoUpdateHeaders()
+        if not hostname:
+            hostname = socket.gethostname()
         for hdr in self.headers:
             if type(hdr) == LastSaveHostHeader:
                 hdr.hostname = hostname
@@ -587,8 +606,10 @@ class PWSafe3(object):
             if type(hdr) == DBNameHeader:
                 return hdr.dbName
     
-    def setDbName(self, dbName):
+    def setDbName(self, dbName, updateAutoData = True):
         """ Returns the name of the db according to the psafe headers """
+        if updateAutoData:
+            self.autoUpdateHeaders()
         for hdr in self.headers:
             if type(hdr) == DBNameHeader:
                 hdr.dbName = dbName
@@ -601,8 +622,10 @@ class PWSafe3(object):
             if type(hdr) == DBDescHeader:
                 return hdr.dbDesc
     
-    def setDbDesc(self, dbDesc):
+    def setDbDesc(self, dbDesc, updateAutoData = True):
         """ Returns the description of the db according to the psafe headers """
+        if updateAutoData:
+            self.autoUpdateHeaders()
         for hdr in self.headers:
             if type(hdr) == DBDescHeader:
                 hdr.dbDesc = dbDesc
