@@ -212,11 +212,11 @@ class PWSafe3(object):
     
     def autoUpdateHeaders(self):
         """ Set auto-set headers that should be set on save """
-        self.setUUID()
-        self.setLastSaveApp('pypwsafe')
-        self.setTimeStampOfLastSave(datetime.datetime.now())
-        self.setLastSaveHost()
-        self.setLastSaveUser()
+        self.setUUID(updateAutoData = False)
+        self.setLastSaveApp('pypwsafe', updateAutoData = False)
+        self.setTimeStampOfLastSave(datetime.datetime.now(), updateAutoData = False)
+        self.setLastSaveHost(updateAutoData = False)
+        self.setLastSaveUser(updateAutoData = False)
 
     def __len__(self):
         return len(self.records)
