@@ -208,7 +208,13 @@ class PWSafe3(object):
             self.records = []
             # Add EOF headers
             self.headers.append(EOFHeader())
-            self.records.append(EOERecordProp())
+            self.autoUpdateHeaders()
+    
+    def autoUpdateHeaders(self):
+        """ Set auto-set headers that should be set on save """
+        self.setUUID()
+        self.setLastSaveApp('pypwsafe')
+        self.setTimeStampOfLastSave(datetime.datetime.now())
 
     def __len__(self):
         return len(self.records)
