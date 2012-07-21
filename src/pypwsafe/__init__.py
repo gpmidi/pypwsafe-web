@@ -512,9 +512,9 @@ class PWSafe3(object):
                 hdr.uuid = str(uuid)
                 return
         if uuid:
-            self.headers.append(UUIDHeader(uuid = uuid))
+            self.headers.insert(0, UUIDHeader(uuid = uuid))
         else:
-            self.headers.append(UUIDHeader())
+            self.headers.insert(0, UUIDHeader())
 
     def getVersion(self):
         """Return the safe's version"""
@@ -529,9 +529,9 @@ class PWSafe3(object):
                 hdr.version = version
                 return
         if version:
-            self.headers.append(VersionHeader(version = version))
+            self.headers.insert(0, VersionHeader(version = version))
         else:
-            self.headers.append(VersionHeader())
+            self.headers.insert(0, VersionHeader())
         
     def getTimeStampOfLastSave(self):
         for hdr in self.headers:
@@ -543,7 +543,7 @@ class PWSafe3(object):
             if type(hdr) == TimeStampOfLastSaveHeader:
                 hdr.lastsave = timestamp.timetuple()
                 return
-        self.headers.append(TimeStampOfLastSaveHeader(lastsave = timestamp.timetuple()))
+        self.headers.insert(0, TimeStampOfLastSaveHeader(lastsave = timestamp.timetuple()))
             
     def getLastSaveApp(self):
         for hdr in self.headers:
@@ -555,7 +555,7 @@ class PWSafe3(object):
             if type(hdr) == LastSaveAppHeader:
                 hdr.lastSafeApp = app
                 return
-        self.headers.append(LastSaveAppHeader(lastSaveApp = app))
+        self.headers.insert(0, LastSaveAppHeader(lastSaveApp = app))
             
     def getLastSaveUser(self):
         for hdr in self.headers:
@@ -567,7 +567,7 @@ class PWSafe3(object):
             if type(hdr) == LastSaveUserHeader:
                 hdr.username = username
                 return
-        self.headers.append(LastSaveUserHeader(username = username))
+        self.headers.insert(0, LastSaveUserHeader(username = username))
     
     def getLastSaveHost(self):
         for hdr in self.headers:
@@ -579,7 +579,7 @@ class PWSafe3(object):
             if type(hdr) == LastSaveHostHeader:
                 hdr.hostname = hostname
                 return
-        self.headers.append(LastSaveHostHeader(hostname = hostname))
+        self.headers.insert(0, LastSaveHostHeader(hostname = hostname))
                 
     def getDbName(self):
         """ Returns the name of the db according to the psafe headers """
@@ -593,7 +593,7 @@ class PWSafe3(object):
             if type(hdr) == DBNameHeader:
                 hdr.dbName = dbName
                 return
-        self.headers.append(DBNameHeader(dbName = dbName))
+        self.headers.insert(0, DBNameHeader(dbName = dbName))
             
     def getDbDesc(self):
         """ Returns the description of the db according to the psafe headers """
@@ -607,7 +607,7 @@ class PWSafe3(object):
             if type(hdr) == DBDescHeader:
                 hdr.dbDesc = dbDesc
                 return
-        self.headers.append(DBDescHeader(dbDesc = dbDesc))
+        self.headers.insert(0, DBDescHeader(dbDesc = dbDesc))
 
     def _get_lock_data(self):
         pid = os.getpid()
