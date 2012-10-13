@@ -29,7 +29,7 @@ from psafefe.psafe.functions import getDatabasePasswordByUser
 # Psafe sync methods
 @rpcmethod(name = 'psafe.sync.updatePSafeCacheByPSafesByPK', signature = ['boolean', 'string', 'string', 'array', 'boolean'])
 @auth
-def updatePSafeCacheByPSafesByPK(username, password, entPKs, sync, **kw):
+def updatePSafeCacheByPSafesByPK(username, password, entPKsUnsafe, sync, **kw):
     """ Update the psafe cache for the given entities. If sync is true, 
     then wait for the cache to update before returning. 
     @note: Any safes that the user doesn't have a valid password for will be skipped.
@@ -44,7 +44,13 @@ def updatePSafeCacheByPSafesByPK(username, password, entPKs, sync, **kw):
     @type sync: boolean
     @return: The number of safes successfully updated
     @raise NoPermissionError: User doesn't have password safe sync permissions
-    """    
+    """
+    # Validate input type    
+    entPKs = []
+    for pk in list(entPKsUnsafe):
+        entPKs.append(int(pk))
+    sync = bool(sync)
+    
     if kw['user'].has_perm('psafe.can_sync_passwordsafe'):
         # user has perms
         waits = []
@@ -53,7 +59,7 @@ def updatePSafeCacheByPSafesByPK(username, password, entPKs, sync, **kw):
             try:
                 psafe = PasswordSafe.objects.get(pk = entPK)
                 psafepass = getDatabasePasswordByUser(kw['user'], password, psafe)
-                waits.append(loadSafe.delay(psafe_pk = entPK, password = psafepass)) #@UndefinedVariable
+                waits.append(loadSafe.delay(psafe_pk = entPK, password = psafepass))  # @UndefinedVariable
                 successes += 1
             except:
                 pass
@@ -70,7 +76,7 @@ def updatePSafeCacheByPSafesByPK(username, password, entPKs, sync, **kw):
 
 @rpcmethod(name = 'psafe.sync.updatePSafeCacheByPSafesByUUID', signature = ['boolean', 'string', 'string', 'array', 'boolean'])
 @auth
-def updatePSafeCacheByPSafesByUUID(username, password, entUUIDs, sync, **kw):
+def updatePSafeCacheByPSafesByUUID(username, password, entUUIDsUnsafe, sync, **kw):
     """ Update the psafe cache for the given entities. If sync is true, 
     then wait for the cache to update before returning. 
     @note: Any safes that the user doesn't have a valid password for will be skipped.
@@ -86,6 +92,12 @@ def updatePSafeCacheByPSafesByUUID(username, password, entUUIDs, sync, **kw):
     @return: The number of safes successfully updated
     @raise NoPermissionError: User doesn't have password safe sync permissions
     """    
+    # Validate input type    
+    entUUIDs = []
+    for pk in list(entUUIDsUnsafe):
+        entUUIDs.append(str(pk))
+    sync = bool(sync)
+        
     if kw['user'].has_perm('psafe.can_sync_passwordsafe'):
         # user has perms
         waits = []
@@ -94,7 +106,7 @@ def updatePSafeCacheByPSafesByUUID(username, password, entUUIDs, sync, **kw):
             try:
                 psafe = PasswordSafe.objects.get(uuid = entUUID)
                 psafepass = getDatabasePasswordByUser(kw['user'], password, psafe)
-                waits.append(loadSafe.delay(psafe_pk = entPK, password = psafepass)) #@UndefinedVariable
+                waits.append(loadSafe.delay(psafe_pk = entPK, password = psafepass))  # @UndefinedVariable
                 successes += 1
             except:
                 pass

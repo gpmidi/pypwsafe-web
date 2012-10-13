@@ -1,2 +1,10 @@
+
+### pws vs psafe ###
 pws = Cache psafe objects via the local process's memory
 psafe = Cache psafe objects using memory-only MySQL tables
+
+
+### Major TODO List ###
+* Add/validate input validation for all RPC views
+* Double check all permissions for repos and safes
+* 

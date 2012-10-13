@@ -73,6 +73,7 @@ def getEntryByUUID(username, password, entUUID, **kw):
         ent = MemPsafeEntry.objects.get(uuid = entUUID)
     except MemPsafeEntry.DoesNotExist:
         raise EntryDoesntExistError
+    # TODO: Catch the model's multiple entries returned error
     
     repo = ent.safe.safe.repo
     if repo.user_can_access(kw['user'], mode = "R"):
