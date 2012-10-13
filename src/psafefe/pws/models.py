@@ -1,5 +1,5 @@
 from django.db import models
-from psafefe.psafe.validators import *
+from psafefe.pws.validators import *
 from django.contrib.auth.models import User, Group
 from uuid import uuid4
 import os, os.path, sys
