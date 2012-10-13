@@ -36,7 +36,7 @@ import logging
 log = logging.getLogger("psafefe.psafe.tasks.write")
 log.debug('initing')
 
-@task()
+@task(expires = 3600)
 def newSafe(psafePK, psafePassword, userPK = None, dbName = None, dbDesc = None):
     """ Create a new, empty psafe (on disk) and then
     load it into the cache. Will not error or overwrite
@@ -207,7 +207,7 @@ def _action(psafe, pypwsafe, **kw):
 
 # TODO: Add support for values based on regexs
 # TODO: Add support for using Django templates and maybe value substitution from other fields in value setting
-@task()
+@task(expires = 3600)
 def modifyEntries(
                   psafePK,
                   psafePassword,
