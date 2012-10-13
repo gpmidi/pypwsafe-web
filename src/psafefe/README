@@ -1,0 +1,2 @@
+pws = Cache psafe objects via the local process's memory
+psafe = Cache psafe objects using memory-only MySQL tables
