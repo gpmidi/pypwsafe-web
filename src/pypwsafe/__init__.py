@@ -39,6 +39,8 @@ import os, os.path
 from struct import pack, unpack
 import logging, logging.config
 import socket
+import getpass
+import re
 
 log = logging.getLogger("psafe.lib.init")
 log.debug('initing')
@@ -633,43 +635,62 @@ class PWSafe3(object):
         self.headers.insert(0, DBDescHeader(dbDesc = dbDesc))
 
     def _get_lock_data(self):
+        """ Returns a string representing the data that should be stored in the lockfile
+        For details about Password Safe's implementation see: http://passwordsafe.git.sourceforge.net/git/gitweb.cgi?p=passwordsafe/pwsafe.git;a=blob;f=pwsafe/pwsafe/src/os/windows/file.cpp
+        """
         pid = os.getpid()
+        username = getpass.getuser()
         host = socket.gethostname()
         fil = self.filename.replace('.psafe3', '.plk')
-        from pickle import dumps
-        return dumps((pid, host, fil))
-        
+        return "%s@%s:%d" % (username, host, pid)
+    
+    # Example Lockfile data: 'myusername@myhostname:12345'
+    LOCKFILE_PARSE_RE = re.compile(r'^(.*)@([^@:]*):(\d+)$')
+    
     def lock(self):
-        """ Acquire a lock on the DB. Raise an exception on failure.
+        """ Acquire a lock on the DB. Raise an exception on failure. Raises an error
+        if the lock has already be acquired by this process or another. 
         Note: Make sure to wrap the post-lock, pre-unlock in a try-finally
         so that the safe is always unlocked. 
         Note: The type of locking/unlocking used should be compatable with 
         the actuall Password Safe app. If the psafe save dir is shared via
         NFS/CIFS/etc then users of the share should be able to read/write/lock/unlock
         psafe files. 
+        Note: No gurentee that this will work in Windows
         """
         lfile = self.filename.replace('.psafe3', '.plk')
+        log.debug("Going to lock %r using %r", self, lfile)
+        
         # Make sure we don't already hold the lock
         if self.locked and os.access(lfile, os.R_OK):
             raise LockAlreadyAcquiredError
         
         if os.path.isfile(lfile):
             # May be a dead pid
-            from pickle import loads
+            log.debug("Lock file already exists. Reading it. ")
             f = open(lfile, 'rb')
-            pid, host, fil = loads(f.read())
+            data = f.read()
             f.close()
-            if host == socket.gethostbyname():
-                try:  # Check if the other proc is still alive
-                    os.kill(pid, 0)  # @UndefinedVariable
-                    raise AlreadyLockedError, "Other process is alive. Can't override lock. "
-                except:
-                    # Not really locked, remove stale lock
-                    os.remove(lfile)
-                    return self.lock()
+            found = self.LOCKFILE_PARSE_RE.findall(data)
+            log.debug("Got %r from the lock", found)
+            if len(found) == 1:
+                (lusername, lhostname, lpid) = found[0]
+                if lhostname == socket.gethostbyname():
+                    try:  # Check if the other proc is still alive
+                        os.kill(pid, 0)  # @UndefinedVariable
+                        log.info("Other process (PID: %r) is alive. Can't override lock for %r ", lpid, self)
+                        raise AlreadyLockedError, "Other process is alive. Can't override lock. "
+                    except:
+                        # Not really locked, remove stale lock
+                        log.warning("Removing stale lock file of %r at %r", self, lfile)
+                        os.remove(lfile)
+                        return self.lock()
+                else:
+                    log.info("Lock file is for a different host (%r). Assuming %r is locked. ", lhostname, self)
+                    raise AlreadyLockedError, "Lock is on a different host. Can't try to unlock. "
             else:
-                raise AlreadyLockedError, "Lock is on a different host. Can't try to unlock. "
-        
+                log.info("Lock file contains invalid data: %r Assuming the safe, %r, is already locked. ", found, self)
+                raise AlreadyLockedError, "Lock file contains invalid data. Assuming the safe is already locked. "
         self.locked = lfile
                 
         # Create the lock file with no race conditions
@@ -679,6 +700,7 @@ class PWSafe3(object):
             os.write(fd, self._get_lock_data())
             os.close(fd)
         except OSError, e:
+            log.info("%r reported as unlocked but can't create the lockfile", self)
             raise AlreadyLockedError
         
     def unlock(self):
@@ -686,13 +708,32 @@ class PWSafe3(object):
         Note: See lock method for important locking info. 
         """
         if not self.locked:
+            log.info("%r is not locked. Failing to unlock. ", self)
             raise NotLockedError, "Not currently locked"
         try:
             os.remove(self.locked)
             self.locked = False
+            log.debug("%r for %r is unlocked", self.locked, self)
         except OSError:
+            log.info("%r reported as locked but no lock file exists", self)
             raise NotLockedError, "Obj reported as locked but no lock file exists"
-                   
+    
+    def forceUnlock(self):
+        """ Try to unlock and remove the lock file by force. 
+        Note: File permissions can cause this to fail.
+        @return: True if a lock file was removed. False otherwise.  
+        """
+        lfile = self.filename.replace('.psafe3', '.plk')
+        log.debug("Going to remove lock file %r from %r by force. Local obj lock status: %r", lfile, self, self.locked)
+        self.locked = False
+        try:
+            os.remove(lfile)
+            log.info("Removed lock file %r by force", lfile)
+            return True
+        except OSError:
+            log.debug("Lock file %r doesn't exist", lfile)
+            return False
+        
 # Misc helper functions
 def ispsafe3(filename):
     """Return True if the file appears to be a psafe v3 file. Does not do in-depth checks. """
