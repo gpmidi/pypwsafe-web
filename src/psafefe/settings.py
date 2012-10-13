@@ -1,20 +1,20 @@
-#!/usr/bin/env python
-#===============================================================================
+# !/usr/bin/env python
+# ===============================================================================
 # This file is part of PyPWSafe.
-#
+# 
 #    PyPWSafe is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 2 of the License, or
 #    (at your option) any later version.
-#
+# 
 #    PyPWSafe is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
-#
+# 
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
-#===============================================================================
+# ===============================================================================
 """ Django settings for psafefe project.
 @warning: The settings below are for TESTING ONLY. Do NOT use them in production. 
 FIXME: Provide a template for production settings modules. 
@@ -35,13 +35,18 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/home/paul/pws/testdb.sqlite3', # Or path to database file if using sqlite3.
-        'USER': '', # Not used with sqlite3.
-        'PASSWORD': '', # Not used with sqlite3.
-        'HOST': '', # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '', # Set to empty string for default. Not used with sqlite3.
-    }
+        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': ':memory:',  # Or path to database file if using sqlite3.
+        'USER': '',  # Not used with sqlite3.
+        'PASSWORD': '',  # Not used with sqlite3.
+        'HOST': '',  # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',  # Set to empty string for default. Not used with sqlite3.
+        'OPTIONS': {
+                    # Use for MySQL DB
+                    # 'init_command': 'SET storage_engine=INNODB',
+                    # 'autocommit': True,
+        },
+    },
 }
 
 # Local time zone for this installation. Choices can be found here:
@@ -230,4 +235,4 @@ RPC4DJANGO_LOG_REQUESTS_RESPONSES = True
 # the passwords to other safes in a safe encrypted with their own password. 
 PSAFE_PERSONAL_PATH = "psafes_personal"
 
-DAJAXICE_MEDIA_PREFIX='dajax'
+DAJAXICE_MEDIA_PREFIX = 'dajax'

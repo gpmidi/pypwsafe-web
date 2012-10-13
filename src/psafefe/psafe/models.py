@@ -1,20 +1,20 @@
-#!/usr/bin/env python
-#===============================================================================
+# !/usr/bin/env python
+# ===============================================================================
 # This file is part of PyPWSafe.
-#
+# 
 #    PyPWSafe is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 2 of the License, or
 #    (at your option) any later version.
-#
+# 
 #    PyPWSafe is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
-#
+# 
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
-#===============================================================================
+# ===============================================================================
 from django.db import models
 from uuid import uuid4
 from django.contrib.auth.models import User, Group
@@ -81,6 +81,7 @@ class PasswordSafeRepo(models.Model):
                                                help_text = "Groups that do not have write access to this repo. This overrides the write-allow groups list. ",
                                                related_name = "write_deny_groups_set",
                                                )
+    
     # Helpers
     def _in_group(self, user, group_relate):
         """ Returns true if the user is in a group that is part of the many-to-many
@@ -133,7 +134,7 @@ class PasswordSafe(models.Model):
     @type uuid: A UUID as a string
     @warning: This field WILL be incorrect if the safe has never been decrypted.    
     """
-    uuid = models.CharField(    # FIXME: Should this be null=true for when the safe hasn't been decrypted?
+    uuid = models.CharField(# FIXME: Should this be null=true for when the safe hasn't been decrypted?
                             # can't use as PK as two psafes may have the same uuid (yes, this *shouldn't* happen, but people use copy/paste to copy safes sometimes. )
                             # primary_key = True,
                             null = False,
@@ -144,7 +145,7 @@ class PasswordSafe(models.Model):
                             help_text = "Password Safe GUID",
                             editable = False,
                             )
-    # FIXME: Change this to a filepath field
+    # FIXME: Change this to a filepath field - Watch out for max_length restrictions
     filename = models.CharField(
                                 # The system should note this safe as "missing" if it can't be found atm. 
                                 null = True,
@@ -173,11 +174,11 @@ class PasswordSafe(models.Model):
 # Memory resident tables
 class MemPSafe(models.Model):
     """ Represent a cache'd psafe """
-    safe = models.ForeignKey(
+    safe = models.OneToOneField(
                              PasswordSafe,
                              null = False,
                              verbose_name = "Password Safe File",
-                             help_text = "Refrence to the psafe file",
+                             help_text = "Reference to the psafe file",
                              editable = False,
                              )
     uuid = models.CharField(
@@ -212,7 +213,7 @@ class MemPSafe(models.Model):
                                   max_length = 1024 * 1024,
                                   verbose_name = "Database Password",
                                   )
-    dbTimeStampOfLastSafe = models.DateTimeField(
+    dbTimeStampOfLastSave = models.DateTimeField(
                                                  null = True,
                                                  verbose_name = "Last Save",
                                                  help_text = "Date/Time of last Password Safe save",
