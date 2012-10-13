@@ -25,12 +25,12 @@
 """
 # Lets this lib work from both 2.4 and above
 try:
-    from hashlib import sha256_func #@UnresolvedImport
-    from hashlib import sha256_mod #@UnresolvedImport
+    from hashlib import sha256_func  # @UnresolvedImport
+    from hashlib import sha256_mod  # @UnresolvedImport
 except:
-    import Crypto.Hash.SHA256 as sha256_mod #@UnresolvedImport @Reimport
-    from Crypto.Hash.SHA256 import new as sha256_func #@UnresolvedImport @Reimport
-from mcrypt import MCRYPT #@UnresolvedImport
+    import Crypto.Hash.SHA256 as sha256_mod  # @UnresolvedImport @Reimport
+    from Crypto.Hash.SHA256 import new as sha256_func  # @UnresolvedImport @Reimport
+from mcrypt import MCRYPT  # @UnresolvedImport
 from hmac import new as HMAC
 from PWSafeV3Headers import *
 from PWSafeV3Records import *
@@ -191,7 +191,7 @@ class PWSafe3(object):
             self.salt = os.urandom(32)
             log.debug("Salt is %s" % repr(self.salt))
             # ITER
-            self.iter = pow(2, 11) #2048
+            self.iter = pow(2, 11)  # 2048
             log.debug("Iter set to %s" % self.iter)
             # K
             self.enckey = os.urandom(32)
@@ -261,10 +261,10 @@ class PWSafe3(object):
         self.fulldata = ''
         for header in self.headers:
             self.fulldata += header.serialiaze()
-            #log.debug("In header flfull now %s",(self.flfull,))
+            # log.debug("In header flfull now %s",(self.flfull,))
         for record in self.records:
             self.fulldata += record.serialiaze()
-            #log.debug("In record flfull now %s",(self.flfull,))
+            # log.debug("In record flfull now %s",(self.flfull,))
         # Encrypted self.fulldata to self.cryptdata
         log.debug("Encrypting header/record data %s" % repr(self.fulldata))
         self.encrypt_data()
@@ -355,11 +355,11 @@ class PWSafe3(object):
         hdr = Create_Header(self._fetch_block)
         self.headers.append(hdr)
         self.hmacreq.append(hdr.hmac_data)
-        #print str(hdr) +" - -"+ repr(hdr)
+        # print str(hdr) +" - -"+ repr(hdr)
         while type(hdr) != EOFHeader:
             hdr = Create_Header(self._fetch_block)
             self.headers.append(hdr)
-            #print str(hdr) +" - -"+ repr(hdr)
+            # print str(hdr) +" - -"+ repr(hdr)
 
         # Parse DB
         self.records = []
@@ -421,14 +421,14 @@ class PWSafe3(object):
                 data += i.data
             else:
                 data += i.hmac_data()
-                #assert i.data == i.hmac_data(), "Working on %r where %r!=%r" % (i, i.data, i.hmac_data())
+                # assert i.data == i.hmac_data(), "Working on %r where %r!=%r" % (i, i.data, i.hmac_data())
         for i in self.records:
             # TODO: Add caching support
             log.debug("Adding hmac data %r from %r" % (i.hmac_data(), i.__class__.__name__))
             data += i.hmac_data()
         log.debug("Building hmac with key %s", repr(self.hshkey))
         hm = HMAC(self.hshkey, data, sha256_mod)
-        #print hm.hexdigest()
+        # print hm.hexdigest()
         log.debug("HMAC %s-%s", repr(hm.hexdigest()), repr(hm.digest()))
         return hm.digest()
 
@@ -640,7 +640,14 @@ class PWSafe3(object):
         return dumps((pid, host, fil))
         
     def lock(self):
-        """ Acquire a lock on the DB. Raise an exception on failure """
+        """ Acquire a lock on the DB. Raise an exception on failure.
+        Note: Make sure to wrap the post-lock, pre-unlock in a try-finally
+        so that the safe is always unlocked. 
+        Note: The type of locking/unlocking used should be compatable with 
+        the actuall Password Safe app. If the psafe save dir is shared via
+        NFS/CIFS/etc then users of the share should be able to read/write/lock/unlock
+        psafe files. 
+        """
         lfile = self.filename.replace('.psafe3', '.plk')
         # Make sure we don't already hold the lock
         if self.locked and os.access(lfile, os.R_OK):
@@ -653,8 +660,8 @@ class PWSafe3(object):
             pid, host, fil = loads(f.read())
             f.close()
             if host == socket.gethostbyname():
-                try:
-                    os.kill(pid, 0) #@UndefinedVariable
+                try:  # Check if the other proc is still alive
+                    os.kill(pid, 0)  # @UndefinedVariable
                     raise AlreadyLockedError, "Other process is alive. Can't override lock. "
                 except:
                     # Not really locked, remove stale lock
@@ -675,7 +682,9 @@ class PWSafe3(object):
             raise AlreadyLockedError
         
     def unlock(self):
-        """ Unlock the DB """
+        """ Unlock the DB 
+        Note: See lock method for important locking info. 
+        """
         if not self.locked:
             raise NotLockedError, "Not currently locked"
         try:
