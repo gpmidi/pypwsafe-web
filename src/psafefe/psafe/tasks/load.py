@@ -24,8 +24,8 @@ Created on Aug 16, 2011
 
 @author: Paulson McIntyre <paul@gpmidi.net>
 '''
-#from celery.task import task #@UnresolvedImport
-from celery.decorators import task, periodic_task #@UnresolvedImport
+# from celery.task import task #@UnresolvedImport
+from celery.decorators import task, periodic_task  # @UnresolvedImport
 from psafefe.psafe.models import *
 from psafefe.psafe.errors import *
 from pypwsafe import PWSafe3, ispsafe3
@@ -64,7 +64,7 @@ def findSafesInRepo(repoPK):
     @param repoPK: The PK of the repo to check
     @type repoPK: int  
     @return: int, the number of safes located
-    @note: Set to ignore result by default. Make sure to override this if you want a value.
+    @note: Set to ignore result by default. Make sure to override this if you want a value or plan to .wait().
     """
     repo = PasswordSafeRepo.objects.get(pk = repoPK)
     cnt = 0
@@ -93,7 +93,9 @@ def findSafesInRepo(repoPK):
 
 @task()
 def loadSafe(psafe_pk, password, force = False):
-    """ Cache  password safe. Returns True if the cache was updated. False otherwise. """
+    """ Cache  password safe. Returns True if the cache was updated. False otherwise. 
+    Try not to change any PKs if it's not required. 
+    """
     try:
         psafe = PasswordSafe.objects.get(pk = psafe_pk)
     except PasswordSafe.DoesNotExist:
