@@ -14,7 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
 #===============================================================================
-''' Psafe cache control
+''' The user's personal psafe control
 Created on Aug 16, 2011
 
 @author: Paulson McIntyre <paul@gpmidi.net>
