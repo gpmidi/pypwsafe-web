@@ -138,10 +138,13 @@ def _update(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches = 
     toUpdate = _findRecords(psafe = psafe, pypwsafe = pypwsafe, refilters = refilters, vfilters = vfilters, maxMatches = None)
     for record in toUpdate:
         for fieldName, newValue in changes.items():
-            try:
-                record[fieldName] = newValue
-            except KeyError, e:
-                log.info("Couldn't set field %r on %r to %r", fieldName, record, newValue)
+            if fieldName == "Password":
+                record.setPassword(newValue)
+            else:
+                try:
+                    record[fieldName] = newValue
+                except KeyError, e:
+                    log.info("Couldn't set field %r on %r to %r", fieldName, record, newValue)
     return len(toUpdate)
 
 def _delete(psafe, pypwsafe, action, refilters, vfilters, maxMatches = None):
@@ -166,10 +169,13 @@ def _add(psafe, pypwsafe, action, changes):
     assert action == "add"
     record = Record()
     for fieldName, fieldValue in changes.items():
-        try:
-            record[fieldName] = fieldValue
-        except KeyError, e:
-            log.warn("Failed to update %r with %r=%r", record, fieldName, fieldValue)
+        if fieldName == "Password":
+            record.setPassword(fieldValue)
+        else:
+            try:
+                record[fieldName] = fieldValue
+            except KeyError, e:
+                log.warn("Failed to update %r with %r=%r", record, fieldName, fieldValue)
     pypwsafe.records.insert(0, record)
     return record
 
@@ -263,7 +269,7 @@ def modifyEntries(
                 
                 # Update one or more existing entries. If no matching entries are found, then create a new one.
                 { 
-                'action':'add-update':,
+                'action':'add-update',
                 'refilters':{ <Regex Filters>, },
                 'vfilters':{ <Value Filters>, },
                 'changes':{ <options> },

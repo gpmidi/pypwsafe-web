@@ -244,6 +244,35 @@ class MemPSafe(models.Model):
                                       verbose_name = "File Last Size",
                                       editable = False,
                                       )
+    entryUseCount = models.IntegerField(
+                                      null = False,
+                                      verbose_name = "Use Count",
+                                      help_text = "The number of times that this entry has been used. ",
+                                      default = 0,
+                                      editable = False,
+                                      )
+    entryLastRefreshed = models.DateTimeField(
+                                            null = False,
+                                            verbose_name = "Cache Entry Last Refreshed",
+                                            help_text = "The last time the cached entry was updated from the on-disk safe",
+                                            editable = False,
+                                            auto_now_add = True,
+                                            )
+    
+    def onRefresh(self, save = True):
+        """ This cache entry has been refreshed """
+        import datetime
+        self.entryUseCount = 0
+        self.entryLastRefreshed = datetime.datetime.now()
+        if save:
+            self.save()
+    
+    def onUse(self, save = True):
+        """ The safe has been used """
+        self.entryUseCount += 1
+        if save:
+            self.save()
+    
     # TODO: Add in safe HMAC validation checks too
 
     def todict(self, getEntries = True, getEntryHistory = True):
@@ -376,7 +405,8 @@ class MemPsafeEntry(models.Model):
     
     def todict(self, history = True):
         """ Return an XML-RPC safe dictionary of the data. Null 
-        fields are deleted! """
+        fields are deleted! Field names (keys) should be identical
+        to those in pypwsafe's records. """
         ret = {
              'PK':self.pk,
              'UUID':self.uuid,

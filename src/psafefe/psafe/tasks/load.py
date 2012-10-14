@@ -33,7 +33,91 @@ import stat
 from datetime import timedelta
 import os, os.path
 
-@periodic_task(run_every = timedelta(minutes = 10), ignore_result = True, expires = 3600)
+import logging
+log = logging.getLogger("psafefe.psafe.tasks.load")
+log.debug('initing')
+
+@periodic_task(run_every = timedelta(minutes = 5), ignore_result = True, expires = 5 * 60)
+def refreshSafesByTimestamp(psafePKs = None):
+    """ Refresh any safes that have a different timestamp and/or different size. Not 100%
+    accurate, but it'll catch most cases. 
+    @return: int, the number of safes refreshed
+    @param psafePKs: A list of PasswordSafe PKs that should be refreshed. Check all if None. 
+    @type psafePKs: None or a list of ints
+    @note: Not 100% accurate.    
+    """
+    refreshed = 0
+    if psafePKs is None:
+        safes = PasswordSafe.objects.all().select_related()
+    else:
+        safes = PasswordSafe.objects.filter(pk__in = psafePKs).select_related()
+        
+    for safe in safes:
+        log.debug("Going to see if %r needs to be updated", safe)
+        if loadSafe(psafe_pk = safe.pk, password = safe.mempsafe_set.all()[0], force = False):
+            refreshed += 1
+        else:
+            log.debug("No need to refresh %r", safe)
+    
+    log.debug("Updated %r safes", refreshed)
+    return refreshed
+
+@periodic_task(run_every = timedelta(minutes = 30), ignore_result = True, expires = 30 * 60)
+def refreshSafesQuick(maxRefresh = 5):
+    """ Perform a full refresh of the most frequently used safes
+    @return: int, the number of safes refreshed
+    @param maxRefresh: The max number of safes to refresh
+    @type maxRefresh: Int  
+    @note: Only the top few safes 
+    """
+    memSafes = MemPSafe.objects.all().order_by('-entryLastRefreshed').select_related()[:maxRefresh]
+    safes = map(lambda s: s.safe.pk, memSafes)
+    
+    return refreshListedSafes(psafePKs = safes)
+    
+@periodic_task(run_every = timedelta(hours = 24), ignore_result = True, expires = 24 * 60 * 60)
+def refreshSafesFull(maxRefresh = None):
+    """ Perform a full refresh of all
+    @return: int, the number of safes refreshed
+    @param maxRefresh: The max number of safes to refresh
+    @type maxRefresh: Int  
+    @note: Only the top few safes 
+    """
+    safes = []
+    
+    if maxRefresh is None:
+        psafes = PasswordSafe.objects.all()
+    else:
+        psafes = PasswordSafe.objects.all()[:maxRefresh]
+    for psafe in psafes:
+        safes.append(psafe.pk)
+    
+    return refreshListedSafes(psafePKs = safes)
+    
+@task(expires = 60 * 60 * 24)
+def refreshListedSafes(psafePKs = []):
+    """ Refresh the cache for all list safes 
+    @return: int, number of safes refreshed
+    """
+    refreshed = 0
+    for psafePK in psafePKs:
+        try:
+            psafe = PasswordSafe.objects.get(pk = psafePK).select_related()
+            mempsafe = psafe.mempsafe_set.all()[0]
+            log.debug("Going to update cache for %r", psafe)
+            
+            assert loadSafe(psafe_pk = psafePK, password = mempsafe.dbPassword, force = True)
+            
+            mempsafe.onRefresh()
+            refreshed += 1
+            log.debug("Done updaing cache for %r", psafe)
+        except Exception, e:
+            log.exception("Failed to update the cache for PSafe ID %r" % psafePK)
+            
+    log.debug("Done refreshing cache for %r safes", refreshed)
+    return refreshed
+    
+@periodic_task(run_every = timedelta(minutes = 30), ignore_result = True, expires = 60 * 30)
 def findSafes(repoByName = None, repoByPK = None):
     """ Walk the given repos (or all if repos=None) and find any new psafe files. 
     @return: int, the number of new safes located
@@ -53,12 +137,10 @@ def findSafes(repoByName = None, repoByPK = None):
     if len(repos) == 0 and repoByName is None and repoByPK is None:
         repos = PasswordSafeRepo.objects.all()
     for repo in repos:
-        # Don't call as a task since we're already in one
-        # although you can in theory
         cnt += findSafesInRepo(repo.pk)
     return cnt
 
-@task(ignore_result = True, expires = 3600)
+@task(ignore_result = True, expires = 60 * 60)
 def findSafesInRepo(repoPK):
     """ Find all safes in the given repo and make sure there is a PasswordSafe object for it
     @param repoPK: The PK of the repo to check
@@ -195,6 +277,8 @@ def loadSafe(psafe_pk, password, force = False):
     # Remove all other entries
     for removedEntry in remaining.values():
         removedEntry.delete()
+    
+    memPSafe.onRefresh()
     
     return True
         

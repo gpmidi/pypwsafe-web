@@ -23,7 +23,6 @@ from rpc4django import rpcmethod
 from psafefe.psafe.rpc.errors import *
 from psafefe.psafe.rpc.auth import auth
 from psafefe.psafe.models import *
-from psafefe.psafe.tasks.write import addUpdateEntry
 from psafefe.psafe.functions import setDatabasePasswordByUser
 
 # Psafe entry methods

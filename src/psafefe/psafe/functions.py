@@ -51,7 +51,7 @@ def getUsersPersonalSafe(user, userPassword, wait = True):
     if not os.access(psafe.psafePath(), os.R_OK):
         # Create the safe
         from psafefe.psafe.tasks import newSafe
-        task = newSafe.delay(#@UndefinedVariable
+        task = newSafe.delay(# @UndefinedVariable
                           userPK = user.pk,
                           psafePK = psafe.pk,
                           psafePassword = userPassword,
@@ -61,12 +61,12 @@ def getUsersPersonalSafe(user, userPassword, wait = True):
             task.wait() 
     return psafe
     
-def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe = None):
+def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe = None, wait = True):
     """ Returns the password to decrypt psafe from the user's
     personal DB. Raise an error if the user doesn't have the
     password """
     if not ppsafe:
-        ppsafe = getUsersPersonalSafe(user, userPassword)
+        ppsafe = getUsersPersonalSafe(user, userPassword, wait = wait)
     # work delayed 
     ents = MemPsafeEntry.objects.filter(safe = MemPSafe.objects.get(safe = ppsafe))
     ents = ents.filter(group = "Password Safe Passwords.%d" % psafe.repo.pk)
@@ -82,7 +82,7 @@ def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe = None):
         raise ValueError, "Unexpected number of entries matched search for a psafe entries. Got %d results. " % len(ents)
 
 def setDatabasePasswordByUser(user, userPassword, psafe, psafePassword, wait = True):
-    """ Set/Create the password for the given psafe """
+    """ Store/update the password for the given psafe """
     # Pull the safe they want to set the pw for so we can
     # make sure they should have access to it
     try:
@@ -98,22 +98,31 @@ def setDatabasePasswordByUser(user, userPassword, psafe, psafePassword, wait = T
     # User should have access to the requested safe
     ppsafe = getUsersPersonalSafe(user, userPassword)
 
-    from psafefe.psafe.tasks import addUpdateEntry
-    task = addUpdateEntry.delay(#@UndefinedVariable
+    from psafefe.psafe.tasks import modifyEntries
+    task = modifyEntries.delay(# @UndefinedVariable
                                 psafePK = ppsafe.pk,
                                 psafePassword = userPassword,
-                                username = psafe.filename,
-                                password = psafePassword,
-                                group = "Password Safe Passwords.%d" % psafe.repo.pk,
-                                title = "PSafe id %d" % psafe.pk,
-                                note = '',
+                                onError = "fail",
+                                updateCache = True,
+                                actions = [
+                                           { 
+                                            'action':'add-update',
+                                            'refilters':{  },
+                                            'vfilters':{
+                                                        'Group':"Password Safe Passwords.%d" % psafe.repo.pk,
+                                                        'Title':"PSafe id %d" % psafe.pk,
+                                                        },
+                                            'changes':{
+                                                       'Group':"Password Safe Passwords.%d" % psafe.repo.pk,
+                                                       'Title':"PSafe id %d" % psafe.pk,
+                                                       'Username':psafe.filename,
+                                                       'Password':psafePassword,
+                                                       },
+                                            'maxMatches': 5,
+                                            },
+                                           ],
                                 )
+    
     if wait:
         task.wait()
-    
-    
-        
-        
-    
-    
-    
+
