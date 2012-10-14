@@ -68,7 +68,9 @@ def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe = None, wait = T
     if not ppsafe:
         ppsafe = getUsersPersonalSafe(user, userPassword, wait = wait)
     # work delayed 
-    ents = MemPsafeEntry.objects.filter(safe = MemPSafe.objects.get(safe = ppsafe))
+    memsafe = MemPSafe.objects.get(safe = ppsafe)
+    memsafe.onUse()
+    ents = MemPsafeEntry.objects.filter(safe = memsafe)
     ents = ents.filter(group = "Password Safe Passwords.%d" % psafe.repo.pk)
     ents = ents.filter(title = "PSafe id %d" % psafe.pk)
     ents = ents.filter(username = psafe.filename)    

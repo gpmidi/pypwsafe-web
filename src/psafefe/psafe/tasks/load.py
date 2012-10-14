@@ -54,7 +54,9 @@ def refreshSafesByTimestamp(psafePKs = None):
         
     for safe in safes:
         log.debug("Going to see if %r needs to be updated", safe)
-        if loadSafe(psafe_pk = safe.pk, password = safe.mempsafe_set.all()[0], force = False):
+        memsafe = safe.mempsafe_set.all()[0]
+        memsafe.onUse()
+        if loadSafe(psafe_pk = safe.pk, password = memsafe.dbPassword, force = False):
             refreshed += 1
         else:
             log.debug("No need to refresh %r", safe)
@@ -104,6 +106,7 @@ def refreshListedSafes(psafePKs = []):
         try:
             psafe = PasswordSafe.objects.get(pk = psafePK).select_related()
             mempsafe = psafe.mempsafe_set.all()[0]
+            mempsafe.onUpdate()
             log.debug("Going to update cache for %r", psafe)
             
             assert loadSafe(psafe_pk = psafePK, password = mempsafe.dbPassword, force = True)

@@ -98,6 +98,7 @@ def getSafeByPK(username, password, entPK, **kw):
     """
     try:
         ent = MemPSafe.objects.get(pk = entPK)
+        ent.onUse()
     except MemPSafe.DoesNotExist:
         raise EntryDoesntExistError
     
@@ -131,6 +132,7 @@ def getSafesForUser(username, password, getEntries = True, getEntryHistory = Tru
             for safe in repo.passwordsafe_set.all():
                 # Dedep, just in case
                 for memsafe in safe.mempsafe_set.all():
+                    memsafe.onUse()
                     valid[memsafe.pk] = memsafe
     return [memsafe.todict(getEntries = getEntries, getEntryHistory = getEntryHistory) for memsafe in valid.values()]
     
