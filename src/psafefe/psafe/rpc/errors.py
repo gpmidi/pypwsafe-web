@@ -41,3 +41,6 @@ class EntryDoesntExistError(NoPermissionError):
 class InvalidUUIDError(ValueError):
     """ The UUID given isn't a valid UUID"""
     
+class MultipleEntriesExistError(KeyError):
+    """ Multiple entries for the given key """
+    

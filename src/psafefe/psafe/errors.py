@@ -35,3 +35,10 @@ class NoPasswordForPasswordSafe(ValueError):
     """ The user's personal safe doesn't have the password for
     the requested password safe """
     
+class CantLocateHelperFiles(ValueError):
+    """ Can't find the directory that holds the test psafe files, static,
+    media, and other needed files for testing. 
+    """
+class EntryNotCached(KeyError):
+    """ Can't find a cached entry for the requested PasswordSafe """
+    

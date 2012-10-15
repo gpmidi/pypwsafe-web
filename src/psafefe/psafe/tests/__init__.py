@@ -15,19 +15,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
 #===============================================================================
+""" Unit tests
+
 """
-This file demonstrates writing tests using the unittest module. These will pass
-when you run "manage.py test".
+# Need to import all other modules in tests dir
+import tasks
+import functions
 
-Replace this with more appropriate tests for your application.
-"""
-
-from django.test import TestCase
-
-
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.assertEqual(1 + 1, 2)

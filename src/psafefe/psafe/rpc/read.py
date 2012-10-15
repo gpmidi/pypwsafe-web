@@ -14,7 +14,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
 #===============================================================================
-'''
+''' Read-only functions
 Created on Aug 16, 2011
 
 @author: gpmidi
@@ -24,12 +24,14 @@ from psafefe.psafe.rpc.errors import *
 from psafefe.psafe.rpc.auth import auth
 from psafefe.psafe.models import *
 from uuid import UUID
+from django.conf import settings
 
 # Entry methods
 @rpcmethod(name = 'psafe.read.getEntryByPK', signature = ['struct', 'string', 'string', 'int'])
 @auth
 def getEntryByPK(username, password, entPK, **kw):
-    """ Return a struct representing the requested entry 
+    """ Return a struct representing the requested entry from the cache. 
+    @note: Will error out if not in the cache. 
     @param username: Requesting user's login
     @type username: string
     @param password: Requesting user's login
@@ -41,6 +43,7 @@ def getEntryByPK(username, password, entPK, **kw):
     """
     try:
         ent = MemPsafeEntry.objects.get(pk = entPK)
+        ent.onUse()
     except MemPsafeEntry.DoesNotExist:
         raise EntryDoesntExistError
     
@@ -51,10 +54,10 @@ def getEntryByPK(username, password, entPK, **kw):
     # User doesn't have access so it might as well not exist
     raise EntryDoesntExistError
 
-@rpcmethod(name = 'psafe.read.getEntryByUUID', signature = ['struct', 'string', 'string', 'int'])
+@rpcmethod(name = 'psafe.read.getEntriesByUUID', signature = ['array', 'string', 'string', 'string'])
 @auth
-def getEntryByUUID(username, password, entUUID, **kw):
-    """ Return a struct representing the requested entry 
+def getEntriesByUUID(username, password, entUUID, **kw):
+    """ Return a list of structs representing the requested entries, if any.  
     @param username: Requesting user's login
     @type username: string
     @param password: Requesting user's login
@@ -69,19 +72,48 @@ def getEntryByUUID(username, password, entUUID, **kw):
         uuid = UUID(entUUID)
     except:
         raise InvalidUUIDError, "%r is not a valid UUID" % entUUID
-    try:
-        ent = MemPsafeEntry.objects.get(uuid = entUUID)
-    except MemPsafeEntry.DoesNotExist:
-        raise EntryDoesntExistError
-    # TODO: Catch the model's multiple entries returned error
     
-    repo = ent.safe.safe.repo
-    if repo.user_can_access(kw['user'], mode = "R"):
-        return ent.todict()
-    
-    # User doesn't have access so it might as well not exist
-    raise EntryDoesntExistError
+    found = []
+    for ent in MemPsafeEntry.objects.filter(uuid = entUUID).select_related():
+        ent.onUse()
+        repo = ent.safe.safe.repo
+        if repo.user_can_access(kw['user'], mode = "R"):
+            found.append(ent.todict())
+            
+    return found
 
+@rpcmethod(name = 'psafe.read.getEntryByUUID', signature = ['struct', 'string', 'string', 'string'])
+@auth
+def getEntryByUUID(username, password, entUUID, **kw):
+    """ Return a struct representing the requested entry. Raises an error if more than
+    one are found. 
+    @param username: Requesting user's login
+    @type username: string
+    @param password: Requesting user's login
+    @type password: string
+    @param entUUID: UUID of the entry to pull as a dash separated string 
+    @type entUUID: string    
+    @return: A dictionary containing the entities properties
+    @raise InvalidUUIDError: The UUID given isn't in a valid format or contains invalid chars. 
+    @raise EntryDoesntExistError: The requested entry doesn't exist or the user doesn't have permission to read it. 
+    """
+    try:
+        uuid = UUID(entUUID)
+    except:
+        raise InvalidUUIDError, "%r is not a valid UUID" % entUUID
+    
+    found = []
+    for ent in MemPsafeEntry.objects.filter(uuid = entUUID):
+        repo = ent.safe.safe.repo
+        if repo.user_can_access(kw['user'], mode = "R"):
+            ent.onUse()
+            found.append(ent.todict())
+                
+    if len(found) == 1:
+        return found[0]
+    elif len(found) == 0:
+        raise EntryDoesntExistError, "Cound't locate %r" % entUUID
+    raise MultipleEntriesExistError, "Found %d entries for %r" % (len(found), entUUID)
 
 #         Password Safe methods
 @rpcmethod(name = 'psafe.read.getSafeByPK', signature = ['struct', 'string', 'string', 'int'])
@@ -97,25 +129,92 @@ def getSafeByPK(username, password, entPK, **kw):
     @return: A dict containing the properties of the requested safe. 
     """
     try:
-        ent = MemPSafe.objects.get(pk = entPK)
-        ent.onUse()
-    except MemPSafe.DoesNotExist:
+        psafe = PasswordSafe.objects.get(pk = entPK)
+    except PasswordSafe.DoesNotExist:
         raise EntryDoesntExistError
     
+    ent = psafe.getCached(canLoad = True, user = kw['user'], userPassword = password)
+    ent.onUse()
     repo = ent.repo
+    
     if repo.user_can_access(kw['user'], mode = "R"):
         return ent.todict()
     
     # User doesn't have access so it might as well not exist
     raise EntryDoesntExistError
 
-@rpcmethod(name = 'psafe.read.getSafesForUser', signature = ['list', 'string', 'string'])
+@rpcmethod(name = 'psafe.read.getSafeByUUID', signature = ['struct', 'string', 'string', 'string'])
 @auth
-def getSafesForUser(username, password, getEntries = True, getEntryHistory = True, mode = 'R', **kw):
-    """ Return a list of dicts representing all psafe files accessible by the requesting user. 
+def getSafeByUUID(username, password, entUUID, **kw):
+    """ Return a struct representing the requested psafe 
     @param username: Requesting user's login
     @type username: string
     @param password: Requesting user's login
+    @type password: string
+    @param entPK: The UUID of the safe to return. 
+    @type entPK: string
+    @return: A dict containing the properties of the requested safe. 
+    """
+    try:
+        uuid = UUID(entUUID)
+    except:
+        raise InvalidUUIDError, "%r is not a valid UUID" % entUUID
+    try:
+        ents = PasswordSafe.objects.filter(uuid = entUUID)
+    except PasswordSafe.DoesNotExist:
+        raise EntryDoesntExistError
+    
+    found = []
+    for ent in ents:
+        ent.onUse()
+        repo = ent.repo
+        if repo.user_can_access(kw['user'], mode = "R"):
+            found.append(ent.getCached(
+                                       canLoad = True,
+                                       user = kw['user'],
+                                       userPassword = password,
+                                       ).todict())
+    
+    if len(found) == 1:
+        return found[0]
+    elif len(found) == 0:
+        raise EntryDoesntExistError, "Cound't locate %r" % entUUID
+    raise MultipleEntriesExistError, "Found %d entries for %r" % (len(found), entUUID)
+
+@rpcmethod(name = 'psafe.read.getSafesByUUID', signature = ['struct', 'string', 'string', 'string'])
+@auth
+def getSafesByUUID(username, password, entUUID, **kw):
+    """ Return a list of structs representing the requested psafes 
+    @param username: Requesting user's login
+    @type username: string
+    @param password: Requesting user's password
+    @type password: string
+    @param entPK: The UUID of the safe to return. 
+    @type entPK: string
+    @return: A list of dicts containing the properties of the requested safes. 
+    """
+    try:
+        uuid = UUID(entUUID)
+    except:
+        raise InvalidUUIDError, "%r is not a valid UUID" % entUUID
+        
+    found = []
+    for ent in PasswordSafe.objects.filter(uuid = entUUID):
+        ent.onUse()
+        repo = ent.repo
+        if repo.user_can_access(kw['user'], mode = "R"):
+            memEnt = ent.getCached(canLoad = True, user = kw['user'], userPassword = password)
+            found.append(memEnt.todict())
+    
+    return found
+
+@rpcmethod(name = 'psafe.read.getSafesForUser', signature = ['list', 'string', 'string'])
+@auth
+def getSafesForUser(username, password, getEntries = False, getEntryHistory = False, mode = 'R', **kw):
+    """ Return a list of dicts representing all psafe files accessible by the requesting user. 
+    @param username: Requesting user's login
+    @type username: string
+    @param password: Requesting user's password
     @type password: string
     @param getEntries: If True, include all of the safe's password entries as well. 
     @type getEntries: boolean
@@ -130,9 +229,8 @@ def getSafesForUser(username, password, getEntries = True, getEntryHistory = Tru
     for repo in PasswordSafeRepo.objects.all():
         if repo.user_can_access(kw['user'], mode = mode):
             for safe in repo.passwordsafe_set.all():
-                # Dedep, just in case
-                for memsafe in safe.mempsafe_set.all():
-                    memsafe.onUse()
-                    valid[memsafe.pk] = memsafe
-    return [memsafe.todict(getEntries = getEntries, getEntryHistory = getEntryHistory) for memsafe in valid.values()]
+                safe.onUse()
+                valid[safe.pk] = safe.getCached(canLoad = True, user = kw['user'], userPassword = password)
+                
+    return [safe.todict(getEntries = getEntries, getEntryHistory = getEntryHistory) for safe in valid.values()]
     

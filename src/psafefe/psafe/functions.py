@@ -31,16 +31,21 @@ from psafefe.psafe.rpc.errors import *
 def getPersonalPsafeRepo():
     """ Returns the repo for the personal psafes """
     try:
-        p = PasswordSafeRepo.objects.get(pk = 1)
-        if p.path != settings.PSAFE_PERSONAL_PATH:
-            p.path = settings.PSAFE_PERSONAL_PATH
-            p.save()
+        p = PasswordSafeRepo.objects.get(pk = settings.PSAFE_PERSONAL_PK)
     except PasswordSafeRepo.DoesNotExist:
-        p = PasswordSafeRepo(pk = 1, name = "Personal Password Safes", path = settings.PSAFE_PERSONAL_PATH)
+        # TODO: Make the 'on dup key' error more user friendly
+        p = PasswordSafeRepo(
+                             pk = settings.PSAFE_PERSONAL_PK,
+                             name = "Personal Password Safes",
+                             path = settings.PSAFE_PERSONAL_PATH,
+                             )
         p.save()
     return p
 
 def getUsersPersonalSafe(user, userPassword, wait = True):
+    """ Returns the user's personal psafe obj. 
+    @warning: If wait=False, there is no guarantee that the mempsafe has been created and loaded. 
+    """
     personalRepo = getPersonalPsafeRepo()
     name = "User_Password_Safe_%s.psafe3" % user.username
     try:
@@ -67,6 +72,12 @@ def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe = None, wait = T
     password """
     if not ppsafe:
         ppsafe = getUsersPersonalSafe(user, userPassword, wait = wait)
+    
+    # Safety checks
+    assert user.check_password(userPassword)
+    assert ppsafe.owner == user
+    assert psafe.repo.user_can_access(user = user, mode = "R")
+    
     # work delayed 
     memsafe = MemPSafe.objects.get(safe = ppsafe)
     memsafe.onUse()
@@ -84,7 +95,7 @@ def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe = None, wait = T
         raise ValueError, "Unexpected number of entries matched search for a psafe entries. Got %d results. " % len(ents)
 
 def setDatabasePasswordByUser(user, userPassword, psafe, psafePassword, wait = True):
-    """ Store/update the password for the given psafe """
+    """ Store/update the password for the given psafe in the user's personal psafe """
     # Pull the safe they want to set the pw for so we can
     # make sure they should have access to it
     try:

@@ -36,6 +36,7 @@ class PasswordSafeRepo(models.Model):
     name = models.CharField(
                             null = False,
                             blank = False,
+                            unique = True,
                             max_length = 255,
                             verbose_name = "Name",
                             help_text = "A human readable name for the password safe repository",
@@ -95,6 +96,14 @@ class PasswordSafeRepo(models.Model):
     def user_can_access(self, user, mode = "R"):
         """ Returns true if the user has access to this repo. Mode should
         be "R" for read only, "RW" for read/write, or "A" for admin. """
+        from django.conf import settings
+        # Supers can do anything
+        if user.is_superuser:
+            return True
+        # Don't allow any traditional access to the personal psafes
+        if self.pk == settings.PSAFE_PERSONAL_PK:
+            return False
+        # Normal perms
         if mode == "R":
             return (self._in_group(user, self.readAllowGroups) and not self._in_group(user, self.readDenyGroups)) or self._in_group(user, self.adminGroups)
         elif mode == "A":
@@ -147,7 +156,10 @@ class PasswordSafe(models.Model):
                             )
     # FIXME: Change this to a filepath field - Watch out for max_length restrictions
     filename = models.CharField(
-                                # The system should note this safe as "missing" if it can't be found atm. 
+                                # The system should note this safe as "missing" if 
+                                # the safe file can't be found atm. This is done by 
+                                # setting filename to null.   
+                                # The root of this entry is relative to the repo's path
                                 null = True,
                                 max_length = 1024 * 1024,
                                 verbose_name = "Password Safe Path",
@@ -163,6 +175,7 @@ class PasswordSafe(models.Model):
                               User,
                               # If null it's a normal psafe, if set, it's a personal psafe
                               null = True,
+                              editable = False,
                               verbose_name = "Owner",
                               help_text = "The owning user of the password safe",
                               ) 
@@ -170,6 +183,39 @@ class PasswordSafe(models.Model):
     def psafePath(self):
         """ Returns the full path on the server to the psafe file """
         return join(self.repo.path, self.filename)
+    
+    def getCached(self, canLoad = False, user = None, userPassword = None):
+        """ Return the RAM only cached data for this safe. 
+        @param canLoad: Indicates what to do if the entry doesn't exist. False: Error out. True: Load the safe then return the obj.  
+        """
+        from psafefe.psafe.errors import EntryNotCached
+        # Can't load without the password
+        from django.contrib.auth.models import User
+        if not isinstance(user, User):
+            canLoad = False
+        if not userPassword:
+            canLoad = False
+        try:
+            return self.mempsafe_set.all()[0]
+        except IndexError, e:
+            if canLoad:
+                try:
+                    from psafefe.psafe.tasks.load import  loadSafe
+                    from psafefe.psafe.functions import getDatabasePasswordByUser
+                    dbPassword = getDatabasePasswordByUser(
+                                              user = user,
+                                              userPassword = userPassword,
+                                              psafe = self,
+                                              wait = True,
+                                              )
+                    ls = loadSafe.delay(psafe_pk = self.pk, password = dbPassword, force = False)  # @UndefinedVariable
+                    ls.wait() 
+                    # Make sure to prevent inf. recursion if the load fails
+                    return self.getCached(canLoad = False)
+                except Exception, e:
+                    raise EntryNotCached, "%r doesn't have a cached entry and loading failed with %r" % (self, e)
+            else:
+                raise EntryNotCached, "%r doesn't have a cached entry and loading is disabled. " % self
     
 # Memory resident tables
 class MemPSafe(models.Model):
@@ -279,7 +325,7 @@ class MemPSafe(models.Model):
         """ Return an XML-RPC safe dictionary of the data. Null 
         fields are deleted! """
         ret = {
-             'PK':self.pk,
+             'PK':self.safe.pk,
              'UUID':self.uuid,
              'Name':self.dbName,
              'Description':self.dbDescription,
@@ -431,6 +477,10 @@ class MemPsafeEntry(models.Model):
             if v is None:
                 del ret[k]
         return ret 
+    
+    def onUse(self):
+        """ The entry was used. Update the counters on our parent mempsafe """
+        self.safe.onUse()
     
 class MemPasswordEntryHistory(models.Model):
     """ Old passwords for the given entry """

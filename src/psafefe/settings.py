@@ -21,14 +21,21 @@ FIXME: Provide a template for production settings modules.
 """
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
-import sys
+
+import sys, os, os.path
+import datetime
+
+#            Dajax/Dajaxice
+DAJAXICE_MEDIA_PREFIX = 'dajax'
 
 import djcelery
 djcelery.setup_loader()
 
+#            Django
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
-    ("Paulson McIntyre", "paul@gpmidi.net"),
+    # (Optional) Send error emails to root on the local machine. Let the system forward them to whomever, if desired. 
+    ("An Admin", "root@localhost"),
 )
 
 MANAGERS = ADMINS
@@ -36,7 +43,8 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': ':memory:',  # Or path to database file if using sqlite3.
+        # Change by day for the moment
+        'NAME': 'database.psafe3',  # Or path to database file if using sqlite3.
         'USER': '',  # Not used with sqlite3.
         'PASSWORD': '',  # Not used with sqlite3.
         'HOST': '',  # Set to empty string for localhost. Not used with sqlite3.
@@ -74,7 +82,7 @@ USE_L10N = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = '/home/paul/pws/media/'
+MEDIA_ROOT = '../../media/'
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -85,7 +93,7 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = '/home/paul/pws/static/'
+STATIC_ROOT = '../../static/'
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -110,6 +118,8 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
+
+DEFAULT_FILE_STORAGE = "../../files"
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 's2&ewc3gnwv$u4n#)x=jtm^3%%2*wkouiv6vaaaesm8q2_e#23'
@@ -145,7 +155,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    '/home/paul/pws/templates/'
+    '../../templates/'
 )
 
 CACHES = {
@@ -178,6 +188,7 @@ INSTALLED_APPS = (
     'rpc4django',
     # Our code
     'psafefe.pws',
+    'psafefe.psafe',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -212,6 +223,7 @@ LOGGING = {
         },
     }
 }
+
 #            Celery settings
 BROKER_HOST = "localhost"
 BROKER_PORT = 5672
@@ -221,6 +233,11 @@ BROKER_VHOST = "gpdev"
 CELERY_RESULT_BACKEND = "amqp"
 # Remove any task results after an hour. High volume sites may need to reduce this. 
 TASK_RESULT_EXPIRES = 1 * 60 * 60
+# Use Celery's test runner so that we can do unit tests involving it
+TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
+# Don't bother with the daemon
+# TODO: Make sure to remove this for anything that isn't for running tests
+CELERY_ALWAYS_EAGER = True
 
 #            RPC4Django
 # Set these to true in high security env
@@ -233,6 +250,21 @@ RPC4DJANGO_LOG_REQUESTS_RESPONSES = True
 
 # Where a user's private psafe is stored. These safes allow a user to save
 # the passwords to other safes in a safe encrypted with their own password. 
+# @note: The INITIAL location - If you need to change the location after it's
+# been created in the DB, then update the DB entry. Best practice would be to change
+# it in here too. 
 PSAFE_PERSONAL_PATH = "psafes_personal"
 
-DAJAXICE_MEDIA_PREFIX = 'dajax'
+# The PK of the personal psafe entry in PasswordSafeRepo
+PSAFE_PERSONAL_PK = 1
+
+# The max number of psafes to return in a single RPC call that does NOT 
+# also return all entries in the psafe. 
+PSAFE_RPC_MAX_SAFES = 16 * 1024
+
+# The max number of psafes to return in a single RPC call that  
+# also returns all entries in the psafe. 
+PSAFE_RPC_MAX_SAFES = 1024
+
+
+
