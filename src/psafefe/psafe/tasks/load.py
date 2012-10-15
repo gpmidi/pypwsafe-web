@@ -64,7 +64,7 @@ def refreshSafesByTimestamp(psafePKs = None):
     log.debug("Updated %r safes", refreshed)
     return refreshed
 
-@periodic_task(run_every = timedelta(minutes = 30), ignore_result = True, expires = 30 * 60)
+@periodic_task(run_every = timedelta(minutes = 60), ignore_result = True, expires = 30 * 60)
 def refreshSafesQuick(maxRefresh = 5):
     """ Perform a full refresh of the most frequently used safes
     @return: int, the number of safes refreshed
