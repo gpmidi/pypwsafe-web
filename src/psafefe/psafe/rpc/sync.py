@@ -176,7 +176,7 @@ def searchForNewPSafeFiles(username, password, sync, **kw):
         return True
     raise NoPermissionError, "User can't sync psafes"
 
-@rpcmethod(name = 'psafe.sync.searchForNewPSafeFiles', signature = ['boolean', 'string', 'string', 'array', 'boolean'])
+@rpcmethod(name = 'psafe.sync.searchForNewPSafeFilesByRepoPK', signature = ['boolean', 'string', 'string', 'array', 'boolean'])
 @auth
 def searchForNewPSafeFilesByRepoPK(username, password, repoByPK, sync, **kw):
     """ Search the given repos for NEW psafes. Will not reload existing safes.
@@ -205,6 +205,37 @@ def searchForNewPSafeFilesByRepoPK(username, password, repoByPK, sync, **kw):
             return False
         return True
     raise NoPermissionError, "User can't sync psafes"
+
+@rpcmethod(name = 'psafe.sync.searchForNewPSafeFilesByRepoName', signature = ['boolean', 'string', 'string', 'array', 'boolean'])
+@auth
+def searchForNewPSafeFilesByRepoName(username, password, repoByName, sync, **kw):
+    """ Search the given repos for NEW psafes. Will not reload existing safes.
+    @param repoByName: A list of repo names to check for new safes
+    @type repoByName: array of strings
+    @return: True on success, false otherwise
+    @raise NoPermissionError: User lacks password sync perms
+    @raise EntryDoesntExistError: One of the repo PKs doesn't exist or the user lacks at least read-only perms to the safe. 
+    """
+    repos = []
+    for repoName in repoByName:
+        # Make sure it exists and the user has access
+        try:
+            repo = PasswordSafeRepo.objects.get(pk = repoName)
+        except PasswordSafeRepo.DoesNotExist:
+            raise EntryDoesntExistError, "Couldn't find a PasswordSafeRepo where name=%r" % repoName
+        if repo.user_can_access(user = kw['user'], mode = "R"):
+            raise EntryDoesntExistError, "Couldn't find a PasswordSafeRepo where name=%r" % repoName
+    if kw['user'].has_perm('psafe.can_sync_passwordsafe'):
+        res = findSafes.delay()  # @UndefinedVariable
+        try:
+            if sync:
+                safesFound = res.wait()
+        except:
+            # TODO: Add some sort of logging for this
+            return False
+        return True
+    raise NoPermissionError, "User can't sync psafes"
+
 
 
 
