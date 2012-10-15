@@ -236,7 +236,38 @@ def searchForNewPSafeFilesByRepoName(username, password, repoByName, sync, **kw)
         return True
     raise NoPermissionError, "User can't sync psafes"
 
+@rpcmethod(name = 'psafe.sync.refreshAllSafesByTimestamp', signature = ['boolean', 'string', 'string', 'boolean'])
+@auth
+def refreshAllSafesByTimestamp(username, password, sync, **kw):
+    """ Refresh psafe files in all repos the user has at least read-only access to. Will
+    only update safes that have had a change in last-modified timestamp or file size. 
 
-
+    @return: True on success, false otherwise
+    @raise NoPermissionError: User lacks password sync perms
+    @raise EntryDoesntExistError: One of the repo PKs doesn't exist or the user lacks at least read-only perms to the safe. 
+    """
+    if kw['user'].has_perm('psafe.can_sync_passwordsafe'):
+        # Get repos the user can access
+        repos = []
+        for repo in PasswordSafeRepo.objects.all():
+            # Make sure it exists and the user has access
+            if repo.user_can_access(user = kw['user'], mode = "R"):
+                repos.append(repo)
+                
+        # Find all of the relevant psafe files
+        psafePKs = []
+        for psafe in PasswordSafe.objects.filter(repo__in = repos):
+            psafePKs.append(psafe.pk)
+        
+        # run the refresh
+        res = refreshSafesByTimestamp.delay(psafePKs = psafePKs)  # @UndefinedVariable
+        try:
+            if sync:
+                safesRefreshed = res.wait()
+        except:
+            # TODO: Add some sort of logging for this
+            return False
+        return True
+    raise NoPermissionError, "User can't sync psafes"
 
 
