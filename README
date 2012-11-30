@@ -44,4 +44,4 @@ FAQ
 	A: http://passwordsafe.git.sourceforge.net/git/gitweb.cgi?p=passwordsafe/pwsafe.git;a=blob_plain;f=pwsafe/pwsafe/docs/formatV3.txt;hb=HEAD or go to the password safe code base and check in /pwsafe/pwsafe/docs/formatV3.txt. 
 	
 TODO
-	1) Add support for using a pure-python twofish algrothem (http://code.google.com/p/python-keysafe/source/browse/crypto/twofish.py) if mcrypt doesn't work. 
+	1) Add support for using a pure-python twofish algorithm (http://code.google.com/p/python-keysafe/source/browse/crypto/twofish.py) if mcrypt doesn't work. 
