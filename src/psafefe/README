@@ -1,7 +1,7 @@
 
 ### pws vs psafe ###
-pws = Cache psafe objects via the local process's memory
-psafe = Cache psafe objects using memory-only MySQL tables
+pws = Cache psafe objects via the local process's memory (Going to Deprecate)
+psafe = Cache psafe objects using memory-only MySQL tables (Using going forward)
 
 
 ### Major TODO List ###
@@ -22,6 +22,7 @@ test settings. See link for test settings in the DB dict.
 away indications as to if the entry exists but the user doesn't have permissions.
 * Move all logic out of indvidual RPC calls and into tasks or helper functions
 ** Should help prevent RPC vs View logic being different
+  
   
 ### Helpful Sniplets ###
 
