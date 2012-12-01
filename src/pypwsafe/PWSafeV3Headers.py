@@ -62,7 +62,8 @@ class Header(object):
     __metaclass__ = _HeaderType
     
     TYPE = None
-    
+    FIELD = None
+
     def __init__(self, htype, hlen, raw_data):
         self.data = raw_data[5:(hlen + 5)]
         self.raw_data = raw_data
@@ -135,6 +136,7 @@ class VersionHeader(Header):
 '\x04\x03'  
     """
     TYPE = 0x00
+    FIELD = 'version'
 
     def __init__(self, htype = None, hlen = 2, raw_data = None, version = 0x305):
         if not htype:
@@ -171,6 +173,7 @@ DHeader(1,16,'\x10\x00\x00\x00\x01\xbdV\x92{H\xdbL\xec\xbb+\xe90w5\x17\xa2P6b\xe
 "UUIDHeader(1,16,'\\x10\\x00\\x00\\x00\\x01\\xbdV\\x92{H\\xdbL\\xec\\xbb+\\xe90w5\\x17\\xa2P6b\\xe8\\x87\\x0c\\x83\\n\\xd8\\x11\\xd7')"
     """
     TYPE = 0x01
+    FIELD = 'uuid'
 
     def __init__(self, htype = None, hlen = 16, raw_data = None, uuid = None):
         if not htype:
@@ -358,6 +361,7 @@ class TimeStampOfLastSaveHeader(Header):
 lastsave    time struct        Last save time of DB
     """
     TYPE = 0x04
+    FIELD = 'lastsave'
 
     def __init__(self, htype = None, hlen = 1, raw_data = None, lastsave = time.gmtime()):
         if not htype:
@@ -416,6 +420,7 @@ class LastSaveAppHeader(Header):
 lastSaveApp        string        Last saved by this app
     """
     TYPE = 0x06
+    FIELD = 'lastSaveApp'
 
     def __init__(self, htype = None, hlen = 1, raw_data = None, lastSaveApp = ''):
         if not htype:
@@ -444,6 +449,7 @@ class LastSaveUserHeader(Header):
 username    string        
     """
     TYPE = 0x07
+    FIELD = 'username'
 
     def __init__(self, htype = None, hlen = 1, raw_data = None, username = ''):
         if not htype:
@@ -472,6 +478,7 @@ class LastSaveHostHeader(Header):
 hostname    string        
     """
     TYPE = 0x08
+    FIELD = 'hostname'
 
     def __init__(self, htype = None, hlen = 1, raw_data = None, hostname = ''):
         if not htype:
@@ -499,6 +506,7 @@ class DBNameHeader(Header):
 dbName        String
     """
     TYPE = 0x09
+    FIELD = 'dbName'
 
     def __init__(self, htype = None, hlen = 1, raw_data = None, dbName = ''):
         if not htype:
@@ -526,6 +534,7 @@ class DBDescHeader(Header):
 dbDesc        String
     """
     TYPE = 0x0a
+    FIELD = 'dbDesc'
 
     def __init__(self, htype = None, hlen = 1, raw_data = None, dbDesc = ''):
         if not htype:

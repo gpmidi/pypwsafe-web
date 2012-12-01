@@ -19,9 +19,9 @@ class AssertRaises(object):
         pass
 
     def __exit__(self, exctype, value, tb):
-        self.exception = exctype(value)
-
         assert_equals(exctype, self.expected_exception)
+
+        self.exception = exctype(value)
         return True
 
 def test_get_record_attr():
@@ -93,12 +93,6 @@ class TestCommandLine(object):
     def test_add_filename_no_options(self):
         options = pwsafecli.parse_commandline(self.parsers,
                                              "unittest add --file foo".split())
-        with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
-            pwsafecli.add_validator(options)
-
-    def test_add_missing_group(self):
-        options = pwsafecli.parse_commandline(self.parsers,
-                                             "unittest add --file foo --title blah --username me --password secret".split())
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
             pwsafecli.add_validator(options)
 
