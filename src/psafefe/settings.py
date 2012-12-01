@@ -264,7 +264,7 @@ PSAFE_RPC_MAX_SAFES = 16 * 1024
 
 # The max number of psafes to return in a single RPC call that  
 # also returns all entries in the psafe. 
-PSAFE_RPC_MAX_SAFES = 1024
+PSAFE_RPC_MAX_SAFES_RCR = 1024
 
 
 
