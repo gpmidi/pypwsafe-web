@@ -45,3 +45,6 @@ FAQ
 	
 TODO
 	1) Add support for using a pure-python twofish algorithm (http://code.google.com/p/python-keysafe/source/browse/crypto/twofish.py) if mcrypt doesn't work. 
+	2) Need to update against the latest version of the official psafe format v3 doc.
+
+ 
