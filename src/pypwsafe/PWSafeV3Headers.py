@@ -34,7 +34,7 @@ from uuid import UUID, uuid4
 from pprint import pformat
 from binascii import unhexlify
 
-#logging.config.fileConfig('/etc/mss/psafe_log.conf')
+# logging.config.fileConfig('/etc/mss/psafe_log.conf')
 log = logging.getLogger("psafe.lib.header")
 log.debug('initing')
 
@@ -84,7 +84,7 @@ class Header(object):
 
     def __repr__(self):
         # Can no longer depend on raw_data existing
-        #return "Header(%s,%d,%s)"%(repr(self.TYPE),self.len,repr(self.raw_data))
+        # return "Header(%s,%d,%s)"%(repr(self.TYPE),self.len,repr(self.raw_data))
         s = self.serial()
         return "Header(%s,%d,%s)" % (repr(self.TYPE), len(s), repr(s))
 
@@ -159,7 +159,6 @@ class VersionHeader(Header):
     def serial(self):
         return pack('=H', self.version)
 
-from uuid import UUID
 class UUIDHeader(Header):
     """DB UUID
     uuid        uuid.UUID        Database uuid object
@@ -387,8 +386,8 @@ lastsave    time struct        Last save time of DB
     def serial(self):
         return makedatetime(self.lastsave)
 
-#TODO: Add support for this header type
-#class WhoLastSavedHeader(Header):
+# TODO: Add support for this header type
+# class WhoLastSavedHeader(Header):
 #    """ User who last saved the DB.     DEPRECATED
 #    """
 #    TYPE = 0x05
@@ -558,14 +557,14 @@ dbDesc        String
         return self.dbDesc
 
 # FIXME: Finish this
-#class DBFiltersHeader(Header):
+# class DBFiltersHeader(Header):
 #    """ Description of the database
-#dbDesc        String
-#Specfic filters for this database.  This is the text equivalent to
-#the XML export of the filters as defined by the filter schema. The text 
-#'image' has no 'print formatting' e.g. tabs and carraige return/line feeds,
-#since XML processing does not require this. This field was introduced in 
-#format version 0x0305.
+# dbDesc        String
+# Specfic filters for this database.  This is the text equivalent to
+# the XML export of the filters as defined by the filter schema. The text 
+# 'image' has no 'print formatting' e.g. tabs and carraige return/line feeds,
+# since XML processing does not require this. This field was introduced in 
+# format version 0x0305.
 #    """
 #    TYPE = 0x0b
 #
@@ -594,17 +593,17 @@ dbDesc        String
 
 # TODO: Fill this in once we have something to test against
 # FIXME: Finish this 
-#class RecentEntriesHeader(Header):
+# class RecentEntriesHeader(Header):
 #    """ Description of the database
-#recentEntries        List of UUIDs
+# recentEntries        List of UUIDs
 #
-#A list of the UUIDs (32 hex character representation of the 16 byte field)
-#of the recently used entries, prefixed by a 2 hex character representation
-#of the number of these entries (right justified and left filled with zeroes).
-#The size of the number of entries field gives a maximum number of entries of 255,
-#however the GUI may impose further restrictions e.g. Windows MFC UI limits this
-#to 25. The first entry is the most recent entry accessed. This field was
-#introduced in format version 0x0307.
+# A list of the UUIDs (32 hex character representation of the 16 byte field)
+# of the recently used entries, prefixed by a 2 hex character representation
+# of the number of these entries (right justified and left filled with zeroes).
+# The size of the number of entries field gives a maximum number of entries of 255,
+# however the GUI may impose further restrictions e.g. Windows MFC UI limits this
+# to 25. The first entry is the most recent entry accessed. This field was
+# introduced in format version 0x0307.
 #    """
 #    TYPE = 0x0f
 #
