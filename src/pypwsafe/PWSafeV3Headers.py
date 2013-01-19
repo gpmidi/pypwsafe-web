@@ -527,6 +527,198 @@ dbName        String
 
     def serial(self):
         return self.dbName
+
+
+class NamedPasswordPolicy(dict):
+    """ """
+    def __init__(
+                 self,
+                 name,
+                 useLowercase = True,
+                 useUppercase = True,
+                 useDigits = True,
+                 useSymbols = True,
+                 useHexDigits = False,
+                 useEasyVision = False,
+                 makePronounceable = False,
+                 minTotalLength = 12,
+                 minLowercaseCharCount = 1,
+                 minUppercaseCharCount = 1,
+                 minDigitCount = 1,
+                 minSpecialCharCount = 1,
+                 allowedSpecialSymbols = "+-=_@#$%^&;:,.<>/~\\[](){}?!|",
+                 ):
+        dict.__init__(
+                      self,
+                      name = name,
+                      useLowercase = useLowercase,
+                      useUppercase = useUppercase,
+                      useDigits = useDigits,
+                      useSymbols = useSymbols,
+                      useHexDigits = useHexDigits,
+                      useEasyVision = useEasyVision,
+                      makePronounceable = makePronounceable,
+                      minTotalLength = minTotalLength,
+                      minLowercaseCharCount = minLowercaseCharCount,
+                      minUppercaseCharCount = minUppercaseCharCount,
+                      minDigitCount = minDigitCount,
+                      minSpecialCharCount = minSpecialCharCount,
+                      allowedSpecialSymbols = allowedSpecialSymbols,
+                      )
+    
+    def __getattribute__(self, attr):
+        if attr in self:
+            return self[attr]
+        else:
+            return dict.__getattribute__(self, attr = attr)
+    
+    def __setattr__(self, attr, value):
+        if attr in self:
+            self[attr] = value
+        else:
+            return dict.__setattr__(self, attr, value)
+
+
+class NamedPasswordPoliciesHeader(Header):
+    """ Named password policies
+
+    """
+    TYPE = 0x10
+    FIELD = 'namedPasswordPolicies'
+    # A few constants
+    USELOWERCASE = 0x8000
+    USEUPPERCASE = 0x4000
+    USEDIGITS = 0x2000
+    USESYMBOLS = 0x1000
+    USEHEXDIGITS = 0x0800
+    USEEASYVERSION = 0x0400
+    MAKEPRONOUNCEABLE = 0x0200
+    UNUSED = 0x01ff
+
+    def __init__(self, htype = None, hlen = 1, raw_data = None, namedPasswordPolicies = []):
+        if not htype:
+            htype = self.TYPE
+        if raw_data:
+            Header.__init__(self, htype, hlen, raw_data)
+        else:
+            # Need an order for crypto checks
+            self.namedPasswordPolicies = []
+            for policy in namedPasswordPolicies:
+                if isinstance(policy, NamedPasswordPolicy):
+                    self.namedPasswordPolicies.append(policy)
+                elif isinstance(policy, dict):
+                    self.namedPasswordPolicies.append(NamedPasswordPolicy(**policy))
+                else:
+                    raise ValueError("Expected a dict or NamedPasswordPolicy")
+
+    def parse(self):
+        """Parse data"""
+        self.namedPasswordPolicies = []
+        left = self.raw_data
+        count = int(unpack('=2s', left[:2]), 16)
+        left = left[2:]
+        while len(left) > 2:
+            count -= 1
+            if count < 0:
+                log.warn("More record data than ")
+            nameLenStr = left[:2]
+            left = left[2:]
+            nameLen, = unpack('=h', nameLenStr)
+            name = left[:nameLenStr]
+            left = left[nameLenStr:]
+            
+            policy = unpack('=4s3s3s3s3s3s2s', left[:19])
+            left = left[19:]
+            # str hex to int
+            policy = [int(x, 16) for x in policy]
+            (flags, ttllen, minlow, minup, mindig, minsym, specialCharsLen) = policy
+            specialChars = left[:specialCharsLen]
+            left = left[:specialCharsLen]
+            
+            if flags & self.USELOWERCASE:
+                uselowercase = True
+            else:
+                uselowercase = False
+            if flags & self.USEUPPERCASE:
+                useuppercase = True
+            else:
+                useuppercase = False
+            if flags & self.USEDIGITS:
+                usedigits = True
+            else:
+                usedigits = False
+            if flags & self.USESYMBOLS:
+                usesymbols = True
+            else:
+                usesymbols = False
+            if flags & self.USEHEXDIGITS:
+                usehex = True
+            else:
+                usehex = False
+            if flags & self.USEEASYVERSION:
+                useeasy = True
+            else:
+                useeasy = False
+            if flags & self.MAKEPRONOUNCEABLE:
+                makepron = True
+            else:
+                makepron = False
+            self.namedPasswordPolicies.append(NamedPasswordPolicy(
+                                                                  name,
+                                                                  useLowercase = uselowercase,
+                                                                  useUppercase = useuppercase,
+                                                                  useDigits = usedigits,
+                                                                  useSymbols = usesymbols,
+                                                                  useHexDigits = usehex,
+                                                                  useEasyVision = useeasy,
+                                                                  makePronounceable = makepron,
+                                                                  minTotalLength = ttllen,
+                                                                  minLowercaseCharCount = minlow,
+                                                                  minUppercaseCharCount = minup,
+                                                                  minDigitCount = mindig,
+                                                                  minSpecialCharCount = minsym,
+                                                                  allowedSpecialSymbols = specialChars,
+                                                                  ))
+
+    def __repr__(self):
+        return "NamedPasswordPolicies" + Header.__repr__(self)
+
+    def __str__(self):
+        return "NamedPasswordPolicies(count=%d)" % len(self.namedPasswordPolicies)
+
+    def serial(self):
+        ret = '%02x' % len(self.namedPasswordPolicies)
+        for policy in self.namedPasswordPolicies:
+            flags = 0
+            if policy.useLowercase:
+                flags = flags | self.USELOWERCASE
+            if policy.useUppercase:
+                flags = flags | self.USEUPPERCASE
+            if policy.useDigits:
+                flags = flags | self.USEDIGITS
+            if policy.useSymbols:
+                flags = flags | self.USESYMBOLS
+            if policy.useHexDigits:
+                flags = flags | self.USEHEXDIGITS
+            if policy.useEasyVision:
+                flags = flags | self.USEEASYVERSION
+            if policy.makePronounceable:
+                flags = flags | self.MAKEPRONOUNCEABLE
+            ret += '%02x%s%04x%03x%03x%03x%03x%03x%s' % (
+                                                       len(policy.name),
+                                                       policy.name,
+                                                       flags,
+                                                       policy.minTotalLength,
+                                                       policy.minLowercaseCharCount,
+                                                       policy.minUppercaseCharCount,
+                                                       policy.minDigitCount,
+                                                       policy.minSpecialCharCount,
+                                                       policy.allowedSpecialSymbols,
+                                                       )
+            # psafe_logger.debug("Serial to %s data %s"%(repr(ret),repr(self.data)))
+        
+        return ret
+    
     
 class DBDescHeader(Header):
     """ Description of the database
