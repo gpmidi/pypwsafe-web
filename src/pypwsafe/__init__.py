@@ -76,7 +76,7 @@ def _findHeader(headers, htype):
             return hdr
     return None
 
-def _getHeaderField(headers, htype):
+def _getHeaderField(headers, htype, ignored = ''):
     hdr = _findHeader(headers, htype)
     if hdr:
         return getattr(hdr, htype.FIELD)
@@ -580,17 +580,22 @@ class PWSafe3(object):
             self.headers.insert(0, LastSaveAppHeader(lastSaveApp = app))
 
     def getLastSaveUser(self):
-        return _getHeaderField(self.headers, LastSaveUserHeader, 'username')
+        ret = _getHeaderField(self.headers, LastSaveUserHeader, 'username')
+        if ret:
+            return ret
+        return _getHeaderFields(self.headers, WhoLastSavedHeader)
 
-    def setLastSaveUser(self, username = None, updateAutoData = True):
+    def setLastSaveUser(self, username = None, updateAutoData = True, addOld = False):
         if updateAutoData:
             self.autoUpdateHeaders()
-        if not username:
+        if username is None:
             import getpass
             username = getpass.getuser()
-
+            
         if not _setHeaderField(self.headers, LastSaveUserHeader, username):
             self.headers.insert(0, LastSaveUserHeader(username = username))
+        if addOld and not _setHeaderField(self.headers, WhoLastSavedHeader, username):
+            self.headers.insert(0, WhoLastSavedHeader(username = username))
 
     def getLastSaveHost(self):
         return _getHeaderField(self.headers, LastSaveHostHeader, 'hostname')
@@ -643,8 +648,7 @@ class PWSafe3(object):
     def setDbRecentEntries(self, entryUUID, updateAutoData = True):
         """ Returns the name of the db according to the psafe headers """
         raise NotImplementedError("FIXME: Add db recent entries control methods")
-
-
+    
     def _get_lock_data(self):
         """ Returns a string representing the data that should be stored in the lockfile
         For details about Password Safe's implementation see: http://passwordsafe.git.sourceforge.net/git/gitweb.cgi?p=passwordsafe/pwsafe.git;a=blob;f=pwsafe/pwsafe/src/os/windows/file.cpp

@@ -211,6 +211,7 @@ K:V for opts:
 # FIXME: Fill in tests
     """
     TYPE = 0x02
+    FIELD = 'opts'
 
     def __init__(self, htype = None, hlen = 2, raw_data = None, **kw):
         if not htype:
@@ -330,6 +331,7 @@ class TreeDisplayStatusHeader(Header):
   
     """
     TYPE = 0x03
+    FIELD = 'status'
 
     def __init__(self, htype = None, hlen = 1, raw_data = None, status = ''):
         if not htype:
@@ -386,32 +388,34 @@ lastsave    time struct        Last save time of DB
     def serial(self):
         return makedatetime(self.lastsave)
 
-# TODO: Add support for this header type
-# class WhoLastSavedHeader(Header):
-#    """ User who last saved the DB.     DEPRECATED
-#    """
-#    TYPE = 0x05
-#
-#    def __init__(self, htype = None, hlen = 1, raw_data = None, status = ''):
-#        if not htype:
-#            htype = self.TYPE
-#        if raw_data:
-#            Header.__init__(self, htype, hlen, raw_data)
-#        else:
-#            self.status = status
-#
-#    def parse(self):
-#        """Parse data"""
-#        self.lastsave = time.gmtime(unpack('=i', self.data)[0])
-#
-#    def __repr__(self):
-#        return "LastSave" + Header.__repr__(self)
-#
-#    def __str__(self):
-#        return "LastSave(%r)" % time.strftime("%a, %d %b %Y %H:%M:%S +0000", self.lastsave)
-#
-#    def serial(self):
-#        return makedatetime(self.lastsave)
+
+class WhoLastSavedHeader(Header):
+    """ User who last saved the DB.     DEPRECATED
+    """
+    TYPE = 0x05
+    FIELD = 'lastsave'
+
+    def __init__(self, htype = None, hlen = 1, raw_data = None, status = ''):
+        if not htype:
+            htype = self.TYPE
+        if raw_data:
+            Header.__init__(self, htype, hlen, raw_data)
+        else:
+            self.status = status
+
+    def parse(self):
+        """Parse data"""
+        self.lastsave = time.gmtime(unpack('=i', self.data)[0])
+
+    def __repr__(self):
+        return "LastSave" + Header.__repr__(self)
+
+    def __str__(self):
+        return "LastSave(%r)" % time.strftime("%a, %d %b %Y %H:%M:%S +0000", self.lastsave)
+
+    def serial(self):
+        return makedatetime(self.lastsave)
+
 
 # Header(6,19,'Password Safe V3.23'),
 class LastSaveAppHeader(Header):
