@@ -149,6 +149,17 @@ class VersionHeader(Header):
     def parse(self):
         """Parse data"""
         self.version = unpack('=H', self.data)[0]
+        
+    def getVersionHuman(self):
+        if self.version in version_map:
+            return version_map[self.version]
+        return "Unknown Version %r" % self.version
+
+    def setVersionHuman(self, version):
+        if version in version_map:
+            self.version = version_map[version]
+        else:
+            raise ValueError("Unknown version name %r" % version)
 
     def __repr__(self):
         return "Version" + Header.__repr__(self)

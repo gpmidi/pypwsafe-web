@@ -558,6 +558,26 @@ class PWSafe3(object):
 
         if not _setHeaderField(self.headers, VersionHeader, version):
             self.headers.insert(0, VersionHeader(version = version))
+            
+    def getVersionPretty(self):
+        """Return the safe's version"""
+        hdr = _findHeader(self.headers, VersionHeader)
+        if hdr:
+            return hdr.getVersionHuman()
+        return None            
+
+    def setVersionPretty(self, version = None, updateAutoData = True):
+        """Return the safe's version"""
+        if updateAutoData:
+            self.autoUpdateHeaders()
+            
+        hdr = _findHeader(self.headers, VersionHeader)
+        if hdr:
+            hdr.setVersionHuman(version)
+        else:
+            n = VersionHeader(version = 0x00)
+            n.setVersionHuman(version = version)
+            self.headers.insert(0, n)
 
     def getTimeStampOfLastSave(self):
         return _getHeaderField(self.headers, TimeStampOfLastSaveHeader, 'lastsave')

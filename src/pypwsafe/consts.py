@@ -49,6 +49,23 @@ ptApplication = 0
 ptDatabase = 1
 ptObsolete = 2
 
+# File format version format
+version_map = {
+               "PasswordSafe V3.01":0x0300,
+               "PasswordSafe V3.03":0x0301,
+               "PasswordSafe V3.09":0x0302,
+               "PasswordSafe V3.12":0x0303,
+               "PasswordSafe V3.13":0x0304,
+               "PasswordSafe V3.14":0x0305,
+               "PasswordSafe V3.19":0x0306,
+               "PasswordSafe V3.22":0x0307,
+               "PasswordSafe V3.25":0x0308,
+               "PasswordSafe V3.26":0x0309,
+               "PasswordSafe V3.28":0x030A,
+               "PasswordSafe V3.29":0x030B,
+               "PasswordSafe V3.29Y":0x030C,
+               }
+
 #            Bools
 conf_bools = {
     'AlwaysOnTop':{
