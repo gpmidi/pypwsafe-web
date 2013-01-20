@@ -82,6 +82,14 @@ def _getHeaderField(headers, htype):
         return getattr(hdr, htype.FIELD)
     return None
 
+def _getHeaderFields(headers, htype):
+    """ For headers that may be there multiple times """
+    found = []
+    for hdr in headers:
+        if type(hdr) == htype:
+            found.append(getattr(hdr, htype.FIELD))
+    return found
+
 def _setHeaderField(headers, htype, value):
     hdr = _findHeader(headers, htype)
     if hdr:
@@ -630,7 +638,7 @@ class PWSafe3(object):
 
     def getDbRecentEntries(self):
         """ Return a list of recent headers """
-        return _getHeaderField(self.headers, RecentEntriesHeader)
+        return _getHeaderFields(self.headers, RecentEntriesHeader)
 
     def setDbRecentEntries(self, entryUUID, updateAutoData = True):
         """ Returns the name of the db according to the psafe headers """
