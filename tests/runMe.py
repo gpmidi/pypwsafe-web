@@ -23,9 +23,15 @@ Created on Jan 19, 2013
 @version: 0.1
 '''
 import unittest
+import os, os.path, sys
 
-import TestSafeTests
-import PWSv3Headers
+import logging
+logging.basicConfig(
+                    level = logging.DEBUG,
+                    )
+
+from PWSv3Headers import *
 
 if __name__ == '__main__':
+    sys.path.append("../src")
     unittest.main()

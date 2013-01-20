@@ -22,5 +22,5 @@ Created on Jan 19, 2013
 @license: GPLv2
 @version: 0.1
 '''
-import PasswdPolicyTest
+from PasswdPolicyTest import *
 

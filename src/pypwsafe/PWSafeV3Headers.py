@@ -546,7 +546,7 @@ class NamedPasswordPolicy(dict):
                  minUppercaseCharCount = 1,
                  minDigitCount = 1,
                  minSpecialCharCount = 1,
-                 allowedSpecialSymbols = "+-=_@#$%^&;:,.<>/~\\[](){}?!|",
+                 allowedSpecialSymbols = DEFAULT_SPECIAL_CHARS,
                  ):
         dict.__init__(
                       self,
@@ -565,6 +565,7 @@ class NamedPasswordPolicy(dict):
                       minSpecialCharCount = minSpecialCharCount,
                       allowedSpecialSymbols = allowedSpecialSymbols,
                       )
+    # TODO: Add __repr__ and __str__
     
     def __getattribute__(self, attr):
         if attr in self:
@@ -614,27 +615,28 @@ class NamedPasswordPoliciesHeader(Header):
     def parse(self):
         """Parse data"""
         self.namedPasswordPolicies = []
-        left = self.raw_data
-        count = int(unpack('=2s', left[:2]), 16)
+        left = self.data
+        print repr(left)
+        count = int(unpack('=2s', left[:2])[0], 16)
+        log.debug("Should have %r records", count)
         left = left[2:]
         while len(left) > 2:
             count -= 1
             if count < 0:
-                log.warn("More record data than ")
-            nameLenStr = left[:2]
+                log.warn("More record data than expected")
+            nameLen = int(unpack('=2s', left[:2])[0], 16)
             left = left[2:]
-            nameLen, = unpack('=h', nameLenStr)
-            name = left[:nameLenStr]
-            left = left[nameLenStr:]
-            
-            policy = unpack('=4s3s3s3s3s3s2s', left[:19])
-            left = left[19:]
+            name = left[:nameLen]
+            log.debug("Name len: %r Name: %r", nameLen, name)
+            left = left[nameLen:]
+            policy = unpack('=4s3s3s3s3s3s2s', left[:21])
+            left = left[21:]
             # str hex to int
             policy = [int(x, 16) for x in policy]
-            (flags, ttllen, minlow, minup, mindig, minsym, specialCharsLen) = policy
-            specialChars = left[:specialCharsLen]
-            left = left[:specialCharsLen]
-            
+            log.debug("%r: Policy=%r", name, policy)
+            # (flags, ttllen, minlow, minup, mindig, minsym, specialCharsLen) = policy
+            (flags, ttllen, mindig, minlow, minsym, minup, specialCharsLen) = policy
+                        
             if flags & self.USELOWERCASE:
                 uselowercase = True
             else:
@@ -663,6 +665,14 @@ class NamedPasswordPoliciesHeader(Header):
                 makepron = True
             else:
                 makepron = False
+            if specialCharsLen == 0:
+                if useeasy:
+                    specialChars = DEFAULT_EASY_SPECIAL_CHARS
+                else:
+                    specialChars = DEFAULT_SPECIAL_CHARS
+            else:
+                specialChars = left[:specialCharsLen]
+                left = left[:specialCharsLen]
             self.namedPasswordPolicies.append(NamedPasswordPolicy(
                                                                   name,
                                                                   useLowercase = uselowercase,
@@ -679,6 +689,8 @@ class NamedPasswordPoliciesHeader(Header):
                                                                   minSpecialCharCount = minsym,
                                                                   allowedSpecialSymbols = specialChars,
                                                                   ))
+            log.debug("Policy: %r", self.namedPasswordPolicies[-1])
+        log.debug("%r leftover", left)
 
     def __repr__(self):
         return "NamedPasswordPolicies" + Header.__repr__(self)
@@ -704,6 +716,12 @@ class NamedPasswordPoliciesHeader(Header):
                 flags = flags | self.USEEASYVERSION
             if policy.makePronounceable:
                 flags = flags | self.MAKEPRONOUNCEABLE
+            if policy.useEasyVision and policy.allowedSpecialSymbols == DEFAULT_EASY_SPECIAL_CHARS:
+                allowedSpecialSymbols = ''
+            elif not policy.useEasyVision and policy.allowedSpecialSymbols == DEFAULT_SPECIAL_CHARS:
+                allowedSpecialSymbols = ''
+            else:
+                allowedSpecialSymbols = policy.allowedSpecialSymbols
             ret += '%02x%s%04x%03x%03x%03x%03x%03x%s' % (
                                                        len(policy.name),
                                                        policy.name,
@@ -713,7 +731,7 @@ class NamedPasswordPoliciesHeader(Header):
                                                        policy.minUppercaseCharCount,
                                                        policy.minDigitCount,
                                                        policy.minSpecialCharCount,
-                                                       policy.allowedSpecialSymbols,
+                                                       allowedSpecialSymbols,
                                                        )
             # psafe_logger.debug("Serial to %s data %s"%(repr(ret),repr(self.data)))
         

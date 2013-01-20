@@ -24,7 +24,10 @@
 
 Created on Oct 27, 2010
 '''
-
+# Default special chars
+DEFAULT_SPECIAL_CHARS = "+-=_@#$%^&;:,.<>/~\\[](){}?!|"
+DEFAULT_EASY_SPECIAL_CHARS = "+-=_@#$%^<>/~\\?"
+ 
 #                Configuration options
 #            Configuration Statics
 ptApplication = 0

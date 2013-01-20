@@ -37,20 +37,21 @@ class TestSafeTestBase(unittest.TestCase):
     # How to open the safe
     autoOpenMode = "RO"
     
-    def setUp(self):
+    def setUp(self):        
         assert self.testSafe
-        assert os.access(self.testSafe, os.R_OK)
+        
+        self.safeLoc = os.path.join("../test_safes", self.testSafe)
+        assert os.access(self.safeLoc, os.R_OK)
         
         # Make a temp dir and make a copy
         self.safeDir = mkdtemp(prefix = "safe_test_%s" % type(self).__name__)
-        os.mkdir(self.safeDir)
         
         # COpy the safe
         self.ourTestSafe = os.path.join(
                                         self.safeDir,
                                         os.path.basename(self.testSafe),
                                         )
-        copyfile(self.testSafe, self.ourTestSafe)
+        copyfile(self.safeLoc, self.ourTestSafe)
         
         from pypwsafe import PWSafe3
         if self.autoOpenSafe:
