@@ -642,7 +642,7 @@ class PWSafe3(object):
 
     def setDbRecentEntries(self, entryUUID, updateAutoData = True):
         """ Returns the name of the db according to the psafe headers """
-        raise NotImplementedError("FIXME: Add db policy control methods")
+        raise NotImplementedError("FIXME: Add db recent entries control methods")
 
 
     def _get_lock_data(self):
