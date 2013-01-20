@@ -283,6 +283,11 @@ K:V for opts:
                 self.opts[name] = value
             else:
                 raise PrefsDataTypeError, "Unexpected record type for preferences %r" % rtype
+        # Fill in defaults prefs
+        for typeS in [conf_bools, conf_ints, conf_strs]:
+            for name, info in typeS.items():
+                if name not in self.opts and info['type'] == ptDatabase:
+                    self.opts[name] = info['default']
 
     def __repr__(self):
         return "NonDefaultPrefs" + Header.__repr__(self)

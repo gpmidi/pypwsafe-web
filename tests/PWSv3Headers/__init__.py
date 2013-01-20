@@ -25,4 +25,4 @@ Created on Jan 19, 2013
 from PasswdPolicyTest import *
 from RecentEntriesTest import *
 from LastSaveUser import *
-
+from NonDefaultPrefsTest import *
