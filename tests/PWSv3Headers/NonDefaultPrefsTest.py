@@ -73,6 +73,7 @@ class NonDefaultPrefsTest_RecordLevel(TestSafeTestBase):
                     self.assertTrue(name in prefs, "Didn't find %r in %r" % (name, prefs))
                 else:
                     self.assertFalse(name in prefs, "Found %r of type %r in %r when it's not a DB level setting" % (name, info['type'], prefs))
-        
+
+# FIXME: Add a check to make sure default values aren't being saved
 # FIXME: Add save test
 

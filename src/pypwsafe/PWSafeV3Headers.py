@@ -304,6 +304,9 @@ K:V for opts:
             if type(value) != typ:
                 raise PrefsDataTypeError, "%r is not a valid type for the key %r" % (type(value), name)
             if typ == bool:
+                if value == conf_bools[name]['default']:
+                    # Default value - Don't save
+                    continue
                 if value is True:
                     value = 1
                 elif value is False:
@@ -313,9 +316,15 @@ K:V for opts:
                 ret += "B %d %d " % (conf_bools[name]['index'], value)
             elif typ == int:
                 value = int(value)
+                if value == conf_ints[name]['default']:
+                    # Default value - Don't save
+                    continue
                 ret += "I %d %d " % (conf_ints[name]['index'], value)
             elif typ == str:
                 value = str(value)
+                if value == conf_strs[name]['default']:
+                    # Default value - Don't save
+                    continue
                 delms = list("\"'#?!%&*+=:;@~<>?,.{}[]()\xbb")
                 delm = None
                 while delm is None and len(delms) > 0:
