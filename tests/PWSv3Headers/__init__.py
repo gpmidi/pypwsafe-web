@@ -23,4 +23,5 @@ Created on Jan 19, 2013
 @version: 0.1
 '''
 from PasswdPolicyTest import *
+from RecentEntriesTest import *
 

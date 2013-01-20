@@ -766,77 +766,88 @@ dbDesc        String
     def serial(self):
         return self.dbDesc
 
-# FIXME: Finish this
-# class DBFiltersHeader(Header):
-#    """ Description of the database
-# dbDesc        String
-# Specfic filters for this database.  This is the text equivalent to
-# the XML export of the filters as defined by the filter schema. The text 
-# 'image' has no 'print formatting' e.g. tabs and carraige return/line feeds,
-# since XML processing does not require this. This field was introduced in 
-# format version 0x0305.
-#    """
-#    TYPE = 0x0b
-#
-#    def __init__(self, htype = None, hlen = 1, raw_data = None, dbDesc = ''):
-#        if not htype:
-#            htype = self.TYPE
-#        if raw_data:
-#            Header.__init__(self, htype, hlen, raw_data)
-#        else:
-#            self.dbDesc = dbDesc
-#
-#    def parse(self):
-#        """Parse data"""
-#        self.dbDesc = self.data
-#
-#    def __repr__(self):
-#        return "DBFilters" + Header.__repr__(self)
-#
-#    def __str__(self):
-#        return "DBFiltersHeader(%r)" % self.dbDesc
-#
-#    def serial(self):
-#        return self.dbDesc
-    
-# TODO: Figure out what "reserved" headers are used for in other apps
 
-# TODO: Fill this in once we have something to test against
-# FIXME: Finish this 
-# class RecentEntriesHeader(Header):
-#    """ Description of the database
-# recentEntries        List of UUIDs
-#
-# A list of the UUIDs (32 hex character representation of the 16 byte field)
-# of the recently used entries, prefixed by a 2 hex character representation
-# of the number of these entries (right justified and left filled with zeroes).
-# The size of the number of entries field gives a maximum number of entries of 255,
-# however the GUI may impose further restrictions e.g. Windows MFC UI limits this
-# to 25. The first entry is the most recent entry accessed. This field was
-# introduced in format version 0x0307.
-#    """
-#    TYPE = 0x0f
-#
-#    def __init__(self, htype = None, hlen = 1, raw_data = None, recentEntries = []):
-#        if not htype:
-#            htype = self.TYPE
-#        if raw_data:
-#            Header.__init__(self, htype, hlen, raw_data)
-#        else:
-#            self.recentEntries = recentEntries
-#
-#    def parse(self):
-#        """Parse data"""
-#        self.recentEntries = []
-#
-#    def __repr__(self):
-#        return "RecentEntries" + Header.__repr__(self)
-#
-#    def __str__(self):
-#        return "RecentEntriesHeader(%r)" % self.recentEntries
-#
-#    def serial(self):
-#        return ','.join(self.recentEntries)    
+class DBFiltersHeader(Header):
+    """ Description of the database
+dbDesc        String
+Specfic filters for this database.  This is the text equivalent to
+the XML export of the filters as defined by the filter schema. The text 
+'image' has no 'print formatting' e.g. tabs and carraige return/line feeds,
+since XML processing does not require this. This field was introduced in 
+format version 0x0305.
+    """
+    TYPE = 0x0b
+    FIELD = 'dbFilter'
+
+    def __init__(self, htype = None, hlen = 1, raw_data = None, dbFilter = ''):
+        if not htype:
+            htype = self.TYPE
+        if raw_data:
+            Header.__init__(self, htype, hlen, raw_data)
+        else:
+            self.dbFilter = dbFilter
+
+    def parse(self):
+        """Parse data"""
+        self.dbFilter = self.data
+
+    def __repr__(self):
+        return "DBFilters" + Header.__repr__(self)
+
+    def __str__(self):
+        return "DBFiltersHeader(%r)" % self.dbFilter
+
+    def serial(self):
+        return self.dbFilter
+    
+
+class RecentEntriesHeader(Header):
+    """ Description of the database
+ recentEntries        List of UUIDs
+
+ A list of the UUIDs (32 hex character representation of the 16 byte field)
+ of the recently used entries, prefixed by a 2 hex character representation
+ of the number of these entries (right justified and left filled with zeroes).
+ The size of the number of entries field gives a maximum number of entries of 255,
+ however the GUI may impose further restrictions e.g. Windows MFC UI limits this
+ to 25. The first entry is the most recent entry accessed. This field was
+ introduced in format version 0x0307.
+    """
+    TYPE = 0x0f
+    FIELD = 'recentEntries'
+
+    def __init__(self, htype = None, hlen = 1, raw_data = None, recentEntries = []):
+        if not htype:
+            htype = self.TYPE
+        if raw_data:
+            Header.__init__(self, htype, hlen, raw_data)
+        else:
+            self.recentEntries = recentEntries
+
+    def parse(self):
+        """Parse data"""
+        LEN = 32
+        left = self.data
+        assert len(left) % LEN == 0
+        self.recentEntries = []
+        while len(left) >= LEN:
+            segement = left[:LEN]
+            left = left[LEN:]
+            log.debug("Working with %r", segement)
+            found = UUID(segement)
+            log.debug("Found UUID of %r", found)
+            self.recentEntries.append(found)
+        log.debug("Left over: %r", left)
+
+    def __repr__(self):
+        return "RecentEntries" + Header.__repr__(self)
+
+    def __str__(self):
+        return "RecentEntriesHeader(%r)" % self.recentEntries
+
+    def serial(self):
+        return ','.join(self.recentEntries[:256])    
+
 
 class EOFHeader(Header):
     """End of headers

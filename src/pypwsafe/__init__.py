@@ -628,6 +628,15 @@ class PWSafe3(object):
         """ Returns the name of the db according to the psafe headers """
         raise NotImplementedError("FIXME: Add db policy control methods")
 
+    def getDbRecentEntries(self):
+        """ Return a list of recent headers """
+        return _getHeaderField(self.headers, RecentEntriesHeader)
+
+    def setDbRecentEntries(self, entryUUID, updateAutoData = True):
+        """ Returns the name of the db according to the psafe headers """
+        raise NotImplementedError("FIXME: Add db policy control methods")
+
+
     def _get_lock_data(self):
         """ Returns a string representing the data that should be stored in the lockfile
         For details about Password Safe's implementation see: http://passwordsafe.git.sourceforge.net/git/gitweb.cgi?p=passwordsafe/pwsafe.git;a=blob;f=pwsafe/pwsafe/src/os/windows/file.cpp
