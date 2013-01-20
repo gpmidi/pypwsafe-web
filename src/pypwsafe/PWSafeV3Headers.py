@@ -867,6 +867,39 @@ class RecentEntriesHeader(Header):
         return ','.join(self.recentEntries[:256])    
 
 
+class EmptyGroupHeader(Header):
+    """ An empty group - May appear multiple times. 
+ groupName        Group name
+
+This fields contains the name of an empty group that cannot be constructed
+from entries within the database. Unlike other header fields, this field can appear
+multiple times.
+    """
+    TYPE = 0x11
+    FIELD = 'groupName'
+
+    def __init__(self, htype = None, hlen = 1, raw_data = None, groupName = ''):
+        if not htype:
+            htype = self.TYPE
+        if raw_data:
+            Header.__init__(self, htype, hlen, raw_data)
+        else:
+            self.groupName = groupName
+
+    def parse(self):
+        """Parse data"""
+        self.groupName = self.data
+
+    def __repr__(self):
+        return "EmptyGroup" + Header.__repr__(self)
+
+    def __str__(self):
+        return "EmptyGroupHeader(%r)" % self.groupName
+
+    def serial(self):
+        return self.groupName
+
+
 class EOFHeader(Header):
     """End of headers
 >>> x=EOFHeader(255,0,'\x00\x00\x00\x00\xff\xbc_AP\x10\xf19\xae\xe99g')

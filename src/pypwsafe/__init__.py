@@ -673,13 +673,38 @@ class PWSafe3(object):
         if updateAutoData:
             self.autoUpdateHeaders()
 
-        hdr = _findHeader(headers, NonDefaultPrefsHeader)
+        hdr = _findHeader(self.headers, NonDefaultPrefsHeader)
         if hdr:
             attr = getattr(hdr, NonDefaultPrefsHeader.FIELD)
             attr[prefName] = prefValue
         else:
             self.headers.insert(0, NonDefaultPrefsHeader(prefName = prefValue))
+    
+    def getEmptyGroups(self):
+        """ Return a list of empty group names """
+        return _getHeaderFields(self.headers, EmptyGroupHeader)
+
+    def setEmptyGroups(self, groups, updateAutoData = True):
+        """ Removes all existing empty group headers and adds one as given by groups """
+        if updateAutoData:
+            self.autoUpdateHeaders()
         
+        for hdr in self.headers:
+            if type(hdr) == EmptyGroupHeader:
+                self.headers.remove(hdr)
+        
+        for groupName in groups:
+            self.headers.insert(0, EmptyGroupHeader(groupName = groupName))
+    
+    def addEmptyGroup(self, groupName, updateAutoData = True):
+        """ Removes all existing empty group headers and adds one as given by groups """
+        if updateAutoData:
+            self.autoUpdateHeaders()
+        
+        assert groupName not in self.getEmptyGroups()
+        
+        self.headers.insert(0, EmptyGroupHeader(groupName = groupName))
+
     def _get_lock_data(self):
         """ Returns a string representing the data that should be stored in the lockfile
         For details about Password Safe's implementation see: http://passwordsafe.git.sourceforge.net/git/gitweb.cgi?p=passwordsafe/pwsafe.git;a=blob;f=pwsafe/pwsafe/src/os/windows/file.cpp

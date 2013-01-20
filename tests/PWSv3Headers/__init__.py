@@ -26,3 +26,4 @@ from PasswdPolicyTest import *
 from RecentEntriesTest import *
 from LastSaveUser import *
 from NonDefaultPrefsTest import *
+from EmptyGroupsTest import *
