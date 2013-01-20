@@ -28,6 +28,8 @@ import os, os.path, sys
 import logging
 logging.basicConfig(
                     level = logging.DEBUG,
+                    filename = '/tmp/pypwsafe_unittests.log',
+                    filemode = 'w',
                     )
 
 from PWSv3Headers import *

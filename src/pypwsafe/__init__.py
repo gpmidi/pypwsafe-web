@@ -579,17 +579,24 @@ class PWSafe3(object):
         if not _setHeaderField(self.headers, LastSaveAppHeader, app):
             self.headers.insert(0, LastSaveAppHeader(lastSaveApp = app))
 
-    def getLastSaveUser(self):
-        ret = _getHeaderField(self.headers, LastSaveUserHeader, 'username')
-        if ret:
+    def getLastSaveUser(self, fallbackOld = True):
+        ret = self.getLastSaveUserNew()
+        if ret or not fallbackOld:
             return ret
-        return _getHeaderFields(self.headers, WhoLastSavedHeader)
+        return self.getLastSaveUserOld()        
+        
+    def getLastSaveUserNew(self):
+        """ Get the last saving user using only the non-deprecated field """
+        return _getHeaderField(self.headers, LastSaveUserHeader, 'username')
+        
+    def getLastSaveUserOld(self):
+        """ Get the last saving user using only the deprecated 0x05 field """
+        return _getHeaderField(self.headers, WhoLastSavedHeader)
 
     def setLastSaveUser(self, username = None, updateAutoData = True, addOld = False):
         if updateAutoData:
             self.autoUpdateHeaders()
         if username is None:
-            import getpass
             username = getpass.getuser()
             
         if not _setHeaderField(self.headers, LastSaveUserHeader, username):

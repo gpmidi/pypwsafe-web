@@ -390,31 +390,31 @@ lastsave    time struct        Last save time of DB
 
 
 class WhoLastSavedHeader(Header):
-    """ User who last saved the DB.     DEPRECATED
+    """ User who last saved the DB.     *DEPRECATED*
     """
     TYPE = 0x05
-    FIELD = 'lastsave'
+    FIELD = 'username'
 
-    def __init__(self, htype = None, hlen = 1, raw_data = None, status = ''):
+    def __init__(self, htype = None, hlen = 1, raw_data = None, username = ''):
         if not htype:
             htype = self.TYPE
         if raw_data:
             Header.__init__(self, htype, hlen, raw_data)
         else:
-            self.status = status
+            self.username = username
 
     def parse(self):
         """Parse data"""
-        self.lastsave = time.gmtime(unpack('=i', self.data)[0])
+        self.username = self.data
 
     def __repr__(self):
         return "LastSave" + Header.__repr__(self)
 
     def __str__(self):
-        return "LastSave(%r)" % time.strftime("%a, %d %b %Y %H:%M:%S +0000", self.lastsave)
+        return "LastSaveUser(%r)" % self.username
 
     def serial(self):
-        return makedatetime(self.lastsave)
+        return self.username
 
 
 # Header(6,19,'Password Safe V3.23'),
@@ -620,7 +620,7 @@ class NamedPasswordPoliciesHeader(Header):
         """Parse data"""
         self.namedPasswordPolicies = []
         left = self.data
-        print repr(left)
+        # print repr(left)
         count = int(unpack('=2s', left[:2])[0], 16)
         log.debug("Should have %r records", count)
         left = left[2:]
