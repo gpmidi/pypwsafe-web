@@ -40,7 +40,9 @@ log.debug('initing')
 def newSafe(psafePK, psafePassword, userPK = None, dbName = None, dbDesc = None):
     """ Create a new, empty psafe (on disk) and then
     load it into the cache. Will not error or overwrite
-    duplicate safes. """
+    duplicate safes. 
+    TODO: Clarify this description
+    """
     if userPK:
         user = User.objects.get(pk = userPK)
     else:
