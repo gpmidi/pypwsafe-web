@@ -24,7 +24,7 @@ class PasswordSafeRepo(models.Model):
                             verbose_name = "Name",
                             help_text = "A human readable name for the password safe repository",
                             )
-    path = models.CharField(
+    path = models.TextField(
                             null = False,
                             blank = False,
                             max_length = 1024 * 1024,

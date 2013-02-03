@@ -20,8 +20,11 @@ Created on Aug 16, 2011
 
 @author: gpmidi
 '''
-from django.conf.urls.defaults import patterns, include, url #@UnresolvedImport
+from django.conf.urls.defaults import patterns, include, url  # @UnresolvedImport
 urlpatterns = patterns('psafefe.psafe.views',
+    # Root page
+    (r'^(?:/)?$', 'static.index'),
+    
     
     
     )

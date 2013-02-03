@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load cache %}
+
+{% block quick %}
+    <li><a href="/psafe/safes/">Safe List</a></li>
+{% endblock %}
+
+{% block title %}Password Safe Mgmt{% endblock %}
+{% block body %}
+    {% cache 3600 indexBody %}
+        
+    {% endcache %}
+{% endblock %}

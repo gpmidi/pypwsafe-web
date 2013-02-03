@@ -137,7 +137,7 @@ def _update(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches = 
     @return: The number of records that were updated. 
     """
     assert action == "update"
-    toUpdate = _findRecords(psafe = psafe, pypwsafe = pypwsafe, refilters = refilters, vfilters = vfilters, maxMatches = None)
+    toUpdate = list(_findRecords(psafe = psafe, pypwsafe = pypwsafe, refilters = refilters, vfilters = vfilters, maxMatches = None))
     for record in toUpdate:
         for fieldName, newValue in changes.items():
             if fieldName == "Password":
@@ -190,10 +190,10 @@ def _addUpdate(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches
     """
     assert action == "add-update"
     log.debug("Going to add-update %r", pypwsafe)
-    updatedCount = _update(psafe = psafe, pypwsafe = pypwsafe, action = action, refilters = refilters, vfilters = vfilters, changes = changes, maxMatches = maxMatches)
+    updatedCount = _update(psafe = psafe, pypwsafe = pypwsafe, action = "update", refilters = refilters, vfilters = vfilters, changes = changes, maxMatches = maxMatches)
     if updatedCount == 0:
         log.debug("Didn't update any records. Creating a new one")
-        record = _add(psafe = psafe, pypwsafe = pypwsafe, action = action, changes = changes)
+        record = _add(psafe = psafe, pypwsafe = pypwsafe, action = "add", changes = changes)
         return dict(updated = 1, newRecord = record)
     return dict(updated = updatedCount, newRecord = None)
 

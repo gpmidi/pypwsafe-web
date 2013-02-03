@@ -193,7 +193,7 @@ def searchForNewPSafeFilesByRepoPK(username, password, repoByPK, sync, **kw):
             repo = PasswordSafeRepo.objects.get(pk = repoPK)
         except PasswordSafeRepo.DoesNotExist:
             raise EntryDoesntExistError, "Couldn't find a PasswordSafeRepo where PK=%r" % repoPK
-        if repo.user_can_access(user = kw['user'], mode = "R"):
+        if not repo.user_can_access(user = kw['user'], mode = "R"):
             raise EntryDoesntExistError, "Couldn't find a PasswordSafeRepo where PK=%r" % repoPK
     if kw['user'].has_perm('psafe.can_sync_passwordsafe'):
         res = findSafes.delay()  # @UndefinedVariable
@@ -223,7 +223,7 @@ def searchForNewPSafeFilesByRepoName(username, password, repoByName, sync, **kw)
             repo = PasswordSafeRepo.objects.get(pk = repoName)
         except PasswordSafeRepo.DoesNotExist:
             raise EntryDoesntExistError, "Couldn't find a PasswordSafeRepo where name=%r" % repoName
-        if repo.user_can_access(user = kw['user'], mode = "R"):
+        if not repo.user_can_access(user = kw['user'], mode = "R"):
             raise EntryDoesntExistError, "Couldn't find a PasswordSafeRepo where name=%r" % repoName
     if kw['user'].has_perm('psafe.can_sync_passwordsafe'):
         res = findSafes.delay()  # @UndefinedVariable
@@ -251,7 +251,7 @@ def refreshAllSafesByTimestamp(username, password, sync, **kw):
         repos = []
         for repo in PasswordSafeRepo.objects.all():
             # Make sure it exists and the user has access
-            if repo.user_can_access(user = kw['user'], mode = "R"):
+            if not repo.user_can_access(user = kw['user'], mode = "R"):
                 repos.append(repo)
                 
         # Find all of the relevant psafe files

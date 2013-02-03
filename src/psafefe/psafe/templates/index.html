@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load cache %}
+
+{% block title %}Password Safe Mgmt{% endblock %}
+{% block body %}
+    {% cache 3600 rootIndexBody %}
+        
+    {% endcache %}
+{% endblock %}

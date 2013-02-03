@@ -96,14 +96,7 @@ def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe = None, wait = T
 
 def setDatabasePasswordByUser(user, userPassword, psafe, psafePassword, wait = True):
     """ Store/update the password for the given psafe in the user's personal psafe """
-    # Pull the safe they want to set the pw for so we can
-    # make sure they should have access to it
-    try:
-        ent = MemPsafeEntry.objects.get(pk = psafe.pk)
-    except MemPsafeEntry.DoesNotExist:
-        raise EntryDoesntExistError
-    
-    repo = ent.safe.safe.repo
+    repo = psafe.repo
     if not repo.user_can_access(user, mode = "R"):
         # User doesn't have access so it might as well not exist
         raise EntryDoesntExistError

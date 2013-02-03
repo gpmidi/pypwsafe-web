@@ -30,6 +30,7 @@ from psafefe.psafe.functions import setDatabasePasswordByUser
 @auth
 def setPsafePasswordByPK(username, password, safePK, safePassword, **kw):
     """ Update the given user's personal psafe to include the password to the given safe.  
+    
     @param username: Requesting user's login
     @type username: string
     @param password: Requesting user's login
@@ -42,17 +43,17 @@ def setPsafePasswordByPK(username, password, safePK, safePassword, **kw):
     @raise EntryDoesntExistError: The safe you are trying to save a password for doesn't exist or the requesting user doesn't have access to it.  
     """
     try:
-        ent = MemPsafeEntry.objects.get(pk = safePK)
-    except MemPsafeEntry.DoesNotExist:
+        pws = PasswordSafe.objects.get(pk = safePK)
+    except PasswordSafe.DoesNotExist:
         raise EntryDoesntExistError
     
-    repo = ent.safe.safe.repo
+    repo = pws.repo
     if repo.user_can_access(kw['user'], mode = "R"):
         # User should have access to the requested safe
         setDatabasePasswordByUser(
                                   user = kw['user'],
                                   userPassword = password,
-                                  psafe = ent.safe.safe,
+                                  psafe = pws,
                                   psafePassword = safePassword,
                                   wait = True,
                                   )
@@ -63,7 +64,8 @@ def setPsafePasswordByPK(username, password, safePK, safePassword, **kw):
 @rpcmethod(name = 'psafe.personal.setPsafePasswordByUUID', signature = ['boolean', 'string', 'string', 'int', 'string'])
 @auth
 def setPsafePasswordByUUID(username, password, safeUUID, safePassword, **kw):
-    """ Update the given user's personal psafe to include the password to the given safe.  
+    """ Update the given user's personal psafe to include the password to the given safe.
+      
     @param username: Requesting user's login
     @type username: string
     @param password: Requesting user's login
@@ -76,21 +78,40 @@ def setPsafePasswordByUUID(username, password, safeUUID, safePassword, **kw):
     @raise EntryDoesntExistError: The safe you are trying to save a password for doesn't exist or the requesting user doesn't have access to it.  
     """
     try:
-        ent = MemPsafeEntry.objects.get(uuid = safeUUID)
-    except MemPsafeEntry.DoesNotExist:
+        # TODO: Add in better handling of more than one entry with the same UUID
+        pws = PasswordSafe.objects.get(uuid = safeUUID)
+    except PasswordSafe.DoesNotExist:
         raise EntryDoesntExistError
     
-    repo = ent.safe.safe.repo
+    repo = pws.repo
     if repo.user_can_access(kw['user'], mode = "R"):
         # User should have access to the requested safe
         setDatabasePasswordByUser(
                                   user = kw['user'],
                                   userPassword = password,
-                                  psafe = ent.safe.safe,
+                                  psafe = pws,
                                   psafePassword = safePassword,
                                   wait = True,
                                   )
         return True
     # User doesn't have access so it might as well not exist
     raise EntryDoesntExistError
+
+
+
+@rpcmethod(name = 'psafe.personal.createPersonalPSafe', signature = ['boolean', 'string', 'string'])
+@auth
+def createPersonalPSafe(username, password, **kw):
+    """ Create and initialize a personal psafe for the calling user if the user 
+    doesn't already have one.
+     
+    @param username: Requesting user's login
+    @type username: string
+    @param password: Requesting user's login
+    @type password: string
+    @return: boolean, True on success, error otherwise
+    """
+    from psafefe.psafe.functions import getUsersPersonalSafe
+    p = getUsersPersonalSafe(user = kw['user'], userPassword = password, wait = True)
+    return True
 
