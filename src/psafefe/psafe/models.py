@@ -238,7 +238,7 @@ class MemPSafe(models.Model):
                             help_text="Password Safe GUID",
                             editable=False,
                             )
-    dbName = models.CharField(
+    dbName = models.TextField(
                               null=True,
                               default=None,
                               blank=True,
