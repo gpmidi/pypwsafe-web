@@ -155,7 +155,7 @@ class PasswordSafe(models.Model):
                             editable=False,
                             )
     # FIXME: Change this to a filepath field - Watch out for max_length restrictions
-    filename = models.CharField(
+    filename = models.TextField(
                                 # The system should note this safe as "missing" if
                                 # the safe file can't be found atm. This is done by
                                 # setting filename to null.
