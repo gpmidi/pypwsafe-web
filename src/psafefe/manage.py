@@ -15,6 +15,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
 #===============================================================================
+import sys
+sys.path.append('/home/gpmidi/code/pypwsafe-web/src')
+sys.path.append('/home/gpmidi/code/pypwsafe-web/externals/pypwsafe/src')
+
 from django.core.management import execute_manager
 import imp
 try:
