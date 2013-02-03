@@ -55,7 +55,7 @@ def getUsersPersonalSafe(user, userPassword, wait = True):
         psafe.save()
     if not os.access(psafe.psafePath(), os.R_OK):
         # Create the safe
-        from psafefe.psafe.tasks import newSafe
+        from psafefe.psafe.tasks.write import newSafe
         task = newSafe.delay(# @UndefinedVariable
                           userPK = user.pk,
                           psafePK = psafe.pk,
