@@ -50,9 +50,12 @@ def getUsersPersonalSafe(user, userPassword, wait = True):
     name = "User_Password_Safe_%s.psafe3" % user.username
     try:
         psafe = PasswordSafe.objects.get(repo = personalRepo, filename = name, owner = user)
-    except PasswordSafe.DoesNotExist:
+    except PasswordSafe.DoesNotExist, e:
         psafe = PasswordSafe(repo = personalRepo, filename = name, owner = user)
         psafe.save()
+    except PasswordSafe.MultipleObjectsReturned, e:
+        # TODO: Add in better handing of this
+        raise RuntimeError("Found more than one personal psafe for user %r" % user)
     if not os.access(psafe.psafePath(), os.R_OK):
         # Create the safe
         from psafefe.psafe.tasks.write import newSafe
