@@ -196,8 +196,8 @@ class PasswordSafe(models.Model):
         if not userPassword:
             canLoad = False
         try:
-            return self.mempsafe_set.all()[0]
-        except IndexError, e:
+            return self.mempsafe
+        except MemPSafe.DoesNotExist, e:
             if canLoad:
                 try:
                     from psafefe.psafe.tasks.load import  loadSafe
