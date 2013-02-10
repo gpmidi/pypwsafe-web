@@ -191,12 +191,19 @@ def searchForNewPSafeFilesByRepoPK(username, password, repoByPK, sync, **kw):
         # Make sure it exists and the user has access
         try:
             repo = PasswordSafeRepo.objects.get(pk = repoPK)
+            repos.append(repo)
+            if not repo.user_can_access(user = kw['user'], mode = "R"):
+                raise EntryDoesntExistError("Couldn't find a PasswordSafeRepo where PK=%r" % repoPK)
         except PasswordSafeRepo.DoesNotExist:
-            raise EntryDoesntExistError, "Couldn't find a PasswordSafeRepo where PK=%r" % repoPK
-        if not repo.user_can_access(user = kw['user'], mode = "R"):
-            raise EntryDoesntExistError, "Couldn't find a PasswordSafeRepo where PK=%r" % repoPK
+            raise EntryDoesntExistError("Couldn't find a PasswordSafeRepo where PK=%r" % repoPK)
+        
     if kw['user'].has_perm('psafe.can_sync_passwordsafe'):
-        res = findSafes.delay()  # @UndefinedVariable
+        res = findSafes.apply_async(# @UndefinedVariable
+                                    kwargs = dict(
+                                                repoByPK = [repo.pk for repo in repos],
+                                                ),
+                                    ignore_result = False,
+                                    ) 
         try:
             if sync:
                 safesFound = res.wait()
@@ -204,7 +211,7 @@ def searchForNewPSafeFilesByRepoPK(username, password, repoByPK, sync, **kw):
             # TODO: Add some sort of logging for this
             return False
         return True
-    raise NoPermissionError, "User can't sync psafes"
+    raise NoPermissionError("User can't sync psafes")
 
 @rpcmethod(name = 'psafe.sync.searchForNewPSafeFilesByRepoName', signature = ['boolean', 'string', 'string', 'array', 'boolean'])
 @auth

@@ -21,6 +21,10 @@ from django.contrib.auth.models import User, Group
 from psafefe.psafe.validators import *
 from os.path import join
 
+import logging
+log = logging.getLogger("psafefe.psafe.models")
+log.debug('initing')
+
 class PasswordSafeRepo(models.Model):
     """ A place where psafes can be stored """
     class Meta:
@@ -179,6 +183,11 @@ class PasswordSafe(models.Model):
                               verbose_name = "Owner",
                               help_text = "The owning user of the password safe",
                               )
+    
+    def __init__(self, *args, **kw):
+        models.Model.__init__(self, *args, **kw)
+        self.log = logging.getLogger("psafefe.psafe.tasks.load.PasswordSafe.%r" % self)
+        self.log.debug('initing')        
 
     def psafePath(self):
         """ Returns the full path on the server to the psafe file """
@@ -188,17 +197,21 @@ class PasswordSafe(models.Model):
         """ Return the RAM only cached data for this safe. 
         @param canLoad: Indicates what to do if the entry doesn't exist. False: Error out. True: Load the safe then return the obj.  
         """
+        self.log.debug("Getting cached copy")
         from psafefe.psafe.errors import EntryNotCached
         # Can't load without the password
         from django.contrib.auth.models import User
         if not isinstance(user, User):
             canLoad = False
+            self.log.debug("Can't load due to lack of valid user (%r)" % user)
         if not userPassword:
             canLoad = False
+            self.log.debug("Can't load due to lack of valid password for user (%r)" % userPassword)
         try:
             return self.mempsafe
         except MemPSafe.DoesNotExist, e:
             if canLoad:
+                self.log.debug("Going to try loading")
                 try:
                     from psafefe.psafe.tasks.load import  loadSafe
                     from psafefe.psafe.functions import getDatabasePasswordByUser

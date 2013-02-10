@@ -37,7 +37,7 @@ import logging
 log = logging.getLogger("psafefe.psafe.tasks.load")
 log.debug('initing')
 
-@periodic_task(run_every = timedelta(minutes = 5), ignore_result = True, expires = 5 * 60)
+@periodic_task(run_every = timedelta(minutes = 5), ignore_result = False, expires = 5 * 60)
 def refreshSafesByTimestamp(psafePKs = None):
     """ Refresh any safes that have a different timestamp and/or different size. Not 100%
     accurate, but it'll catch most cases. 
@@ -64,7 +64,7 @@ def refreshSafesByTimestamp(psafePKs = None):
     log.debug("Updated %r safes", refreshed)
     return refreshed
 
-@periodic_task(run_every = timedelta(minutes = 60), ignore_result = True, expires = 30 * 60)
+@periodic_task(run_every = timedelta(minutes = 60), ignore_result = False, expires = 30 * 60)
 def refreshSafesQuick(maxRefresh = 5):
     """ Perform a full refresh of the most frequently used safes
     @return: int, the number of safes refreshed
@@ -77,7 +77,7 @@ def refreshSafesQuick(maxRefresh = 5):
     
     return refreshListedSafes(psafePKs = safes)
     
-@periodic_task(run_every = timedelta(hours = 24), ignore_result = True, expires = 24 * 60 * 60)
+@periodic_task(run_every = timedelta(hours = 24), ignore_result = False, expires = 24 * 60 * 60)
 def refreshSafesFull(maxRefresh = None):
     """ Perform a full refresh of all
     @return: int, the number of safes refreshed
@@ -120,7 +120,7 @@ def refreshListedSafes(psafePKs = []):
     log.debug("Done refreshing cache for %r safes", refreshed)
     return refreshed
     
-@periodic_task(run_every = timedelta(minutes = 30), ignore_result = True, expires = 60 * 30)
+@periodic_task(run_every = timedelta(minutes = 30), ignore_result = False, expires = 60 * 30)
 def findSafes(repoByName = None, repoByPK = None):
     """ Walk the given repos (or all if repos=None) and find any new psafe files. 
     @return: int, the number of new safes located
@@ -134,16 +134,16 @@ def findSafes(repoByName = None, repoByPK = None):
     cnt = 0
     repos = []
     if repoByName:
-        repos += [PasswordSafeRepo.objects.filter(name = repo) for repo in repoByName]
+        repos += [PasswordSafeRepo.objects.get(name = repo) for repo in repoByName]
     if repoByPK:
-        repos += [PasswordSafeRepo.objects.filter(pk = repo) for repo in repoByPK]
+        repos += [PasswordSafeRepo.objects.get(pk = repo) for repo in repoByPK]
     if len(repos) == 0 and repoByName is None and repoByPK is None:
         repos = PasswordSafeRepo.objects.all()
     for repo in repos:
         cnt += findSafesInRepo(repo.pk)
     return cnt
 
-@task(ignore_result = True, expires = 60 * 60)
+@task(ignore_result = False, expires = 60 * 60)
 def findSafesInRepo(repoPK):
     """ Find all safes in the given repo and make sure there is a PasswordSafe object for it
     @param repoPK: The PK of the repo to check
@@ -193,6 +193,7 @@ def loadSafe(psafe_pk, password, force = False):
         memPSafe = MemPSafe(
                             safe = psafe,
                             )
+        
     # Check if we need to
     if not force and os.stat(psafe.psafePath())[stat.ST_MTIME] == memPSafe.fileLastModified and memPSafe.fileLastSize == os.stat(psafe.psafePath())[stat.ST_SIZE]:
         return False
@@ -213,13 +214,13 @@ def loadSafe(psafe_pk, password, force = False):
         psafe.save()
     # Update/set attributes
     memPSafe.uuid = pypwsafe.getUUID()
-    memPSafe.dbName = psafe.getDbName()
-    memPSafe.dbDescription = psafe.getDbDesc()
+    memPSafe.dbName = pypwsafe.getDbName()
+    memPSafe.dbDescription = pypwsafe.getDbDesc()
     memPSafe.dbPassword = password
-    memPSafe.dbTimeStampOfLastSafe = psafe.getTimeStampOfLastSave()
-    memPSafe.dbLastSaveApp = psafe.getLastSaveApp()
-    memPSafe.dbLastSaveHost = psafe.getLastSaveHost()
-    memPSafe.dbLastSaveUser = psafe.getLastSaveUser()
+    memPSafe.dbTimeStampOfLastSafe = pypwsafe.getTimeStampOfLastSave()
+    memPSafe.dbLastSaveApp = pypwsafe.getLastSaveApp()
+    memPSafe.dbLastSaveHost = pypwsafe.getLastSaveHost()
+    memPSafe.dbLastSaveUser = pypwsafe.getLastSaveUser()
     
     memPSafe.save()
     
