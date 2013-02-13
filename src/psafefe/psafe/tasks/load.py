@@ -111,7 +111,7 @@ def refreshListedSafes(psafePKs=[]):
     refreshed = 0
     for psafePK in psafePKs:
         try:
-            psafe = PasswordSafe.objects.get(pk=psafePK).select_related()
+            psafe = PasswordSafe.objects.get(pk=psafePK)
             mempsafe = psafe.mempsafe_set.all()[0]
             mempsafe.onUpdate()
             log.debug("Going to update cache for %r", psafe)
