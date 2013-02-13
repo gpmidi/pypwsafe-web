@@ -198,6 +198,9 @@ class PasswordSafe(models.Model):
         self.log = logging.getLogger("psafefe.psafe.tasks.load.PasswordSafe.%r" % self)
         self.log.debug('initing')
 
+    def determinPSafePath(self, newFilename):
+        return newFilename.lstrip(self.repo.path)
+
     def psafePath(self):
         """ Returns the full path on the server to the psafe file """
         return join(self.repo.path, self.filename)

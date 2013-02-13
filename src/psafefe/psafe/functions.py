@@ -13,7 +13,7 @@
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
+#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #===============================================================================
 ''' Helper functions
 Created on Aug 17, 2011
@@ -28,31 +28,33 @@ import os
 from psafefe.psafe.errors import *
 from psafefe.psafe.rpc.errors import *
 
+
 def getPersonalPsafeRepo():
     """ Returns the repo for the personal psafes """
     try:
-        p = PasswordSafeRepo.objects.get(pk = settings.PSAFE_PERSONAL_PK)
+        p = PasswordSafeRepo.objects.get(pk=settings.PSAFE_PERSONAL_PK)
     except PasswordSafeRepo.DoesNotExist:
         # TODO: Make the 'on dup key' error more user friendly
         p = PasswordSafeRepo(
-                             pk = settings.PSAFE_PERSONAL_PK,
-                             name = "Personal Password Safes",
-                             path = settings.PSAFE_PERSONAL_PATH,
+                             pk=settings.PSAFE_PERSONAL_PK,
+                             name="Personal Password Safes",
+                             path=settings.PSAFE_PERSONAL_PATH,
                              )
         p.save()
     return p
 
-def getUsersPersonalSafe(user, userPassword, wait = True):
+
+def getUsersPersonalSafe(user, userPassword, wait=True):
     """ Returns the user's personal psafe obj. 
     @warning: If wait=False, there is no guarantee that the mempsafe has been created and loaded. 
     """
     personalRepo = getPersonalPsafeRepo()
-    # TODO: Add PK in to help guarantee no user ever gets another's psafe. 
+    # TODO: Add PK in to help guarantee no user ever gets another's psafe.
     name = "User_Password_Safe_%d_%s.psafe3" % (user.pk, user.username)
     try:
-        psafe = PasswordSafe.objects.get(repo = personalRepo, filename = name, owner = user)
+        psafe = PasswordSafe.objects.get(repo=personalRepo, filename=name, owner=user)
     except PasswordSafe.DoesNotExist, e:
-        psafe = PasswordSafe(repo = personalRepo, filename = name, owner = user)
+        psafe = PasswordSafe(repo=personalRepo, filename=name, owner=user)
         psafe.save()
     except PasswordSafe.MultipleObjectsReturned, e:
         # TODO: Add in better handing of this
@@ -61,35 +63,36 @@ def getUsersPersonalSafe(user, userPassword, wait = True):
         # Create the safe
         from psafefe.psafe.tasks.write import newSafe
         task = newSafe.delay(# @UndefinedVariable
-                          userPK = user.pk,
-                          psafePK = psafe.pk,
-                          psafePassword = userPassword,
-                          dbName = "Personal Password Safe For %r" % user.username,
+                          userPK=user.pk,
+                          psafePK=psafe.pk,
+                          psafePassword=userPassword,
+                          dbName="Personal Password Safe For %r" % user.username,
                           )
-        if wait: 
-            task.wait() 
+        if wait:
+            task.wait()
     return psafe
-    
-def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe = None, wait = True):
+
+
+def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe=None, wait=True):
     """ Returns the password to decrypt psafe from the user's
     personal DB. Raise an error if the user doesn't have the
     password """
     if not ppsafe:
-        ppsafe = getUsersPersonalSafe(user, userPassword, wait = wait)
-    
+        ppsafe = getUsersPersonalSafe(user, userPassword, wait=wait)
+
     # Safety checks
     assert user.check_password(userPassword)
     assert ppsafe.owner == user
-    assert psafe.repo.user_can_access(user = user, mode = "R")
-    
-    # work delayed 
-    memsafe = MemPSafe.objects.get(safe = ppsafe)
+    assert psafe.repo.user_can_access(user=user, mode="R")
+
+    # work delayed
+    memsafe = MemPSafe.objects.get(safe=ppsafe)
     memsafe.onUse()
-    ents = MemPsafeEntry.objects.filter(safe = memsafe)
-    ents = ents.filter(group = "Password Safe Passwords.%d" % psafe.repo.pk)
-    ents = ents.filter(title = "PSafe id %d" % psafe.pk)
-    ents = ents.filter(username = psafe.filename)    
-    
+    ents = MemPsafeEntry.objects.filter(safe=memsafe)
+    ents = ents.filter(group="Password Safe Passwords.%d" % psafe.repo.pk)
+    ents = ents.filter(title="PSafe id %d" % psafe.pk)
+    # ents = ents.filter(username = psafe.filename)
+
     # Use len so we cache results instead of count
     if len(ents) == 1:
         return ents[0].password
@@ -98,24 +101,25 @@ def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe = None, wait = T
     else:
         raise ValueError, "Unexpected number of entries matched search for a psafe entries. Got %d results. " % len(ents)
 
-def setDatabasePasswordByUser(user, userPassword, psafe, psafePassword, wait = True):
+
+def setDatabasePasswordByUser(user, userPassword, psafe, psafePassword, wait=True):
     """ Store/update the password for the given psafe in the user's personal psafe """
     repo = psafe.repo
-    if not repo.user_can_access(user, mode = "R"):
+    if not repo.user_can_access(user, mode="R"):
         # User doesn't have access so it might as well not exist
         raise EntryDoesntExistError
-    
+
     # User should have access to the requested safe
     ppsafe = getUsersPersonalSafe(user, userPassword)
 
     from psafefe.psafe.tasks import modifyEntries
     task = modifyEntries.delay(# @UndefinedVariable
-                                psafePK = ppsafe.pk,
-                                psafePassword = userPassword,
-                                onError = "fail",
-                                updateCache = True,
-                                actions = [
-                                           { 
+                                psafePK=ppsafe.pk,
+                                psafePassword=userPassword,
+                                onError="fail",
+                                updateCache=True,
+                                actions=[
+                                           {
                                             'action':'add-update',
                                             'refilters':{  },
                                             'vfilters':{
@@ -132,7 +136,7 @@ def setDatabasePasswordByUser(user, userPassword, psafe, psafePassword, wait = T
                                             },
                                            ],
                                 )
-    
+
     if wait:
         task.wait()
 
