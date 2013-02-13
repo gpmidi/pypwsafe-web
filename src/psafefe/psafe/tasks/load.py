@@ -198,8 +198,9 @@ def loadSafe(psafe_pk, password, force = False):
     if not force and os.stat(psafe.psafePath())[stat.ST_MTIME] == memPSafe.fileLastModified and memPSafe.fileLastSize == os.stat(psafe.psafePath())[stat.ST_SIZE]:
         return False
     
-    # Save first, just in case
-    memPSafe.fileLastModified = os.stat(psafe.psafePath())[stat.ST_MTIME]
+    # Save first, just in case it changes while we are reading already read data
+    import datetime
+    memPSafe.fileLastModified = datetime.datetime.fromtimestamp(os.stat(psafe.psafePath())[stat.ST_MTIME])
     memPSafe.fileLastSize = os.stat(psafe.psafePath())[stat.ST_SIZE]
     
     # Let standard psafe errors travel on up    
@@ -226,7 +227,7 @@ def loadSafe(psafe_pk, password, force = False):
     
     # All entries in db. Remove from list after updating.  
     remaining = {}
-    for i in MemPsafeEntry.objects.filter(safe = pypwsafe):
+    for i in MemPsafeEntry.objects.filter(safe = memPSafe):
         if i.uuid in remaining: 
             raise DuplicateUUIDError, "Entry %r has the same UUID as %r" % (i, remaining[i.uuid])
         else:

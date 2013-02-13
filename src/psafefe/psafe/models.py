@@ -347,7 +347,7 @@ class MemPSafe(models.Model):
              'Name':self.dbName,
              'Description':self.dbDescription,
              'Password':self.dbPassword,
-             'Last Save Time':self.dbTimeStampOfLastSafe,
+             'Last Save Time':self.dbTimeStampOfLastSave,
              'Last Save App':self.dbLastSaveApp,
              'Last Save Host':self.dbLastSaveHost,
              'Last Save User':self.dbLastSaveUser,
@@ -498,6 +498,10 @@ class MemPsafeEntry(models.Model):
     def onUse(self):
         """ The entry was used. Update the counters on our parent mempsafe """
         self.safe.onUse()
+        
+    def getHistory(self):
+        """ Return all old passwords, in order """
+        return self.mempasswordentryhistory_set.all().order_by('creationTime')
 
 class MemPasswordEntryHistory(models.Model):
     """ Old passwords for the given entry """

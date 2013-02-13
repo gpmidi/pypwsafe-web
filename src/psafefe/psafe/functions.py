@@ -47,7 +47,8 @@ def getUsersPersonalSafe(user, userPassword, wait = True):
     @warning: If wait=False, there is no guarantee that the mempsafe has been created and loaded. 
     """
     personalRepo = getPersonalPsafeRepo()
-    name = "User_Password_Safe_%s.psafe3" % user.username
+    # TODO: Add PK in to help guarantee no user ever gets another's psafe. 
+    name = "User_Password_Safe_%d_%s.psafe3" % (user.pk, user.username)
     try:
         psafe = PasswordSafe.objects.get(repo = personalRepo, filename = name, owner = user)
     except PasswordSafe.DoesNotExist, e:
@@ -118,11 +119,11 @@ def setDatabasePasswordByUser(user, userPassword, psafe, psafePassword, wait = T
                                             'action':'add-update',
                                             'refilters':{  },
                                             'vfilters':{
-                                                        'Group':"Password Safe Passwords.%d" % psafe.repo.pk,
+                                                        'Group':["Password Safe Passwords.%d" % psafe.repo.pk, ],
                                                         'Title':"PSafe id %d" % psafe.pk,
                                                         },
                                             'changes':{
-                                                       'Group':"Password Safe Passwords.%d" % psafe.repo.pk,
+                                                       'Group':["Password Safe Passwords.%d" % psafe.repo.pk, ],
                                                        'Title':"PSafe id %d" % psafe.pk,
                                                        'Username':psafe.filename,
                                                        'Password':psafePassword,

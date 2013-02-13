@@ -229,8 +229,11 @@ def getSafesForUser(username, password, getEntries = False, getEntryHistory = Fa
     for repo in PasswordSafeRepo.objects.all():
         if repo.user_can_access(kw['user'], mode = mode):
             for safe in repo.passwordsafe_set.all():
-                safe.onUse()
-                valid[safe.pk] = safe.getCached(canLoad = True, user = kw['user'], userPassword = password)
+                try:
+                    safe.onUse()
+                    valid[safe.pk] = safe.getCached(canLoad = True, user = kw['user'], userPassword = password)
+                except Exception, e:
+                    pass
                 
     return [safe.todict(getEntries = getEntries, getEntryHistory = getEntryHistory) for safe in valid.values()]
     
