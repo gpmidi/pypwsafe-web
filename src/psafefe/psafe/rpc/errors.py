@@ -13,7 +13,7 @@
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
+#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #===============================================================================
 ''' XML-RPC Errors
 Created on Aug 17, 2011
@@ -25,22 +25,27 @@ Created on Aug 17, 2011
 class NotAuthorizedError(ValueError):
     """ User failed to authenticate """
 
+
 class NoPermissionError(NotAuthorizedError):
-    """ The user doesn't have the required permissons """
+    """ The user doesn't have the required permissions """
+
 
 class BadUsernamePasswordError(NotAuthorizedError):
     """ User provided an incorrect username/password combo """
-    
+
+
 class InactiveUserError(NotAuthorizedError):
     """ User isn't active """
-    
+
+
 class EntryDoesntExistError(NoPermissionError):
-    """ The requested entry doesn't exist or the user doens't have 
+    """ The requested entry doesn't exist or the user doens't have
     permission to access it. """
-    
+
+
 class InvalidUUIDError(ValueError):
     """ The UUID given isn't a valid UUID"""
-    
+
+
 class MultipleEntriesExistError(KeyError):
     """ Multiple entries for the given key """
-    
