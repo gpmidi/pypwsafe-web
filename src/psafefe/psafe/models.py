@@ -20,10 +20,12 @@ from uuid import uuid4
 from django.contrib.auth.models import User, Group
 from psafefe.psafe.validators import *
 from os.path import join
+from django.contrib import admin
 
 import logging
 log = logging.getLogger("psafefe.psafe.models")
 log.debug('initing')
+
 
 class PasswordSafeRepo(models.Model):
     """ A place where psafes can be stored """
@@ -38,53 +40,53 @@ class PasswordSafeRepo(models.Model):
                        )
 
     name = models.CharField(
-                            null = False,
-                            blank = False,
-                            unique = True,
-                            max_length = 255,
-                            verbose_name = "Name",
-                            help_text = "A human readable name for the password safe repository",
+                            null=False,
+                            blank=False,
+                            unique=True,
+                            max_length=255,
+                            verbose_name="Name",
+                            help_text="A human readable name for the password safe repository",
                             )
     path = models.TextField(
-                            null = False,
-                            blank = False,
-                            max_length = 1024 * 1024,
-                            verbose_name = "Server Location",
-                            help_text = "The location on the server of the password safes",
-                            validators = [
+                            null=False,
+                            blank=False,
+                            max_length=1024 * 1024,
+                            verbose_name="Server Location",
+                            help_text="The location on the server of the password safes",
+                            validators=[
                                         validate_r_ok,
                                         ],
                             )
     adminGroups = models.ManyToManyField(
                                            Group,
-                                           verbose_name = "Admin Groups",
-                                           help_text = "Groups that have administrative access to this repo",
-                                           related_name = "admin_groups_set",
+                                           verbose_name="Admin Groups",
+                                           help_text="Groups that have administrative access to this repo",
+                                           related_name="admin_groups_set",
                                            )
     readAllowGroups = models.ManyToManyField(
                                                Group,
-                                               verbose_name = "Read-Allow Groups",
-                                               help_text = "Groups that have read access to this repo",
-                                               related_name = "read_allow_groups_set",
+                                               verbose_name="Read-Allow Groups",
+                                               help_text="Groups that have read access to this repo",
+                                               related_name="read_allow_groups_set",
                                                )
     writeAllowGroups = models.ManyToManyField(
                                                Group,
-                                               verbose_name = "Write-Allow Groups",
-                                               help_text = "Groups that have write access to this repo",
-                                               related_name = "write_allow_groups_set",
+                                               verbose_name="Write-Allow Groups",
+                                               help_text="Groups that have write access to this repo",
+                                               related_name="write_allow_groups_set",
                                                )
     # These are applied before the allows
     readDenyGroups = models.ManyToManyField(
                                                Group,
-                                               verbose_name = "Read-Deny Groups",
-                                               help_text = "Groups that do not have read access to this repo. This overrides the read-allow groups list. ",
-                                               related_name = "read_deny_groups_set",
+                                               verbose_name="Read-Deny Groups",
+                                               help_text="Groups that do not have read access to this repo. This overrides the read-allow groups list. ",
+                                               related_name="read_deny_groups_set",
                                                )
     writeDenyGroups = models.ManyToManyField(
                                                Group,
-                                               verbose_name = "Write-Deny Groups",
-                                               help_text = "Groups that do not have write access to this repo. This overrides the write-allow groups list. ",
-                                               related_name = "write_deny_groups_set",
+                                               verbose_name="Write-Deny Groups",
+                                               help_text="Groups that do not have write access to this repo. This overrides the write-allow groups list. ",
+                                               related_name="write_deny_groups_set",
                                                )
 
     # Helpers
@@ -97,7 +99,7 @@ class PasswordSafeRepo(models.Model):
                 return True
         return False
 
-    def user_can_access(self, user, mode = "R"):
+    def user_can_access(self, user, mode="R"):
         """ Returns true if the user has access to this repo. Mode should
         be "R" for read only, "RW" for read/write, or "A" for admin. """
         from django.conf import settings
@@ -121,6 +123,8 @@ class PasswordSafeRepo(models.Model):
     # Include options for storing all safes in a GIT repo
     # Add per-user permissions too
     # Add user-created groups or something to that effect
+admin.site.register(PasswordSafeRepo)
+
 
 class PasswordSafe(models.Model):
     """ Keep a record of all psafes that we should track
@@ -150,13 +154,13 @@ class PasswordSafe(models.Model):
     uuid = models.CharField(# FIXME: Should this be null=true for when the safe hasn't been decrypted?
                             # can't use as PK as two psafes may have the same uuid (yes, this *shouldn't* happen, but people use copy/paste to copy safes sometimes. )
                             # primary_key = True,
-                            null = False,
+                            null=False,
                             # Make it a callable otherwise all will default to the same (at least within one instance)
-                            default = lambda: str(uuid4()),
-                            max_length = 36,
-                            verbose_name = "UUID",
-                            help_text = "Password Safe GUID",
-                            editable = False,
+                            default=lambda: str(uuid4()),
+                            max_length=36,
+                            verbose_name="UUID",
+                            help_text="Password Safe GUID",
+                            editable=False,
                             )
     # FIXME: Change this to a filepath field - Watch out for max_length restrictions
     filename = models.TextField(
@@ -164,36 +168,36 @@ class PasswordSafe(models.Model):
                                 # the safe file can't be found atm. This is done by
                                 # setting filename to null.
                                 # The root of this entry is relative to the repo's path
-                                null = True,
-                                max_length = 1024 * 1024,
-                                verbose_name = "Password Safe Path",
-                                help_text = "The full path to the password safe from the worker's perspective",
+                                null=True,
+                                max_length=1024 * 1024,
+                                verbose_name="Password Safe Path",
+                                help_text="The full path to the password safe from the worker's perspective",
                                 )
     repo = models.ForeignKey(
                              PasswordSafeRepo,
-                             verbose_name = "Repository",
-                             help_text = "The password safe repository that this safe resides in",
+                             verbose_name="Repository",
+                             help_text="The password safe repository that this safe resides in",
                              )
 
     owner = models.ForeignKey(
                               User,
                               # If null it's a normal psafe, if set, it's a personal psafe
-                              null = True,
-                              editable = False,
-                              verbose_name = "Owner",
-                              help_text = "The owning user of the password safe",
+                              null=True,
+                              editable=False,
+                              verbose_name="Owner",
+                              help_text="The owning user of the password safe",
                               )
-    
+
     def __init__(self, *args, **kw):
         models.Model.__init__(self, *args, **kw)
         self.log = logging.getLogger("psafefe.psafe.tasks.load.PasswordSafe.%r" % self)
-        self.log.debug('initing')        
+        self.log.debug('initing')
 
     def psafePath(self):
         """ Returns the full path on the server to the psafe file """
         return join(self.repo.path, self.filename)
 
-    def getCached(self, canLoad = False, user = None, userPassword = None):
+    def getCached(self, canLoad=False, user=None, userPassword=None):
         """ Return the RAM only cached data for this safe. 
         @param canLoad: Indicates what to do if the entry doesn't exist. False: Error out. True: Load the safe then return the obj.  
         """
@@ -216,15 +220,15 @@ class PasswordSafe(models.Model):
                     from psafefe.psafe.tasks.load import  loadSafe
                     from psafefe.psafe.functions import getDatabasePasswordByUser
                     dbPassword = getDatabasePasswordByUser(
-                                              user = user,
-                                              userPassword = userPassword,
-                                              psafe = self,
-                                              wait = True,
+                                              user=user,
+                                              userPassword=userPassword,
+                                              psafe=self,
+                                              wait=True,
                                               )
-                    ls = loadSafe.delay(psafe_pk = self.pk, password = dbPassword, force = False)  # @UndefinedVariable
+                    ls = loadSafe.delay(psafe_pk=self.pk, password=dbPassword, force=False)  # @UndefinedVariable
                     ls.wait()
                     # Make sure to prevent inf. recursion if the load fails
-                    return self.getCached(canLoad = False)
+                    return self.getCached(canLoad=False)
                 except Exception, e:
                     raise EntryNotCached, "%r doesn't have a cached entry and loading failed with %r" % (self, e)
             else:
@@ -232,97 +236,98 @@ class PasswordSafe(models.Model):
 
     def onUse(self):
         """ Record psafe access """
-        
+admin.site.register(PasswordSafe)
+
 
 # Memory resident tables
 class MemPSafe(models.Model):
     """ Represent a cache'd psafe """
     safe = models.OneToOneField(
                              PasswordSafe,
-                             null = False,
-                             verbose_name = "Password Safe File",
-                             help_text = "Reference to the psafe file",
-                             editable = False,
+                             null=False,
+                             verbose_name="Password Safe File",
+                             help_text="Reference to the psafe file",
+                             editable=False,
                              )
     uuid = models.CharField(
                             # can't use as PK as two psafes may have the same uuid
                             # primary_key = True,
-                            null = False,
+                            null=False,
                             # Make it a callable otherwise all will default to the same (at least within one instance)
-                            default = lambda: str(uuid4()),
-                            max_length = 36,
-                            verbose_name = "UUID",
-                            help_text = "Password Safe GUID",
-                            editable = False,
+                            default=lambda: str(uuid4()),
+                            max_length=36,
+                            verbose_name="UUID",
+                            help_text="Password Safe GUID",
+                            editable=False,
                             )
     dbName = models.TextField(
-                              null = True,
-                              default = None,
-                              blank = True,
-                              max_length = 1024 * 1024,
-                              verbose_name = "Database Name",
+                              null=True,
+                              default=None,
+                              blank=True,
+                              max_length=1024 * 1024,
+                              verbose_name="Database Name",
                               )
     dbDescription = models.TextField(
-                                     null = True,
-                                     blank = True,
-                                     default = None,
-                                     max_length = 1024 * 1024 * 1024,
-                                     verbose_name = "Database Description",
+                                     null=True,
+                                     blank=True,
+                                     default=None,
+                                     max_length=1024 * 1024 * 1024,
+                                     verbose_name="Database Description",
                                      )
     dbPassword = models.TextField(
-                                  null = False,
-                                  blank = True,
-                                  default = "bogus12345",
-                                  max_length = 1024 * 1024,
-                                  verbose_name = "Database Password",
+                                  null=False,
+                                  blank=True,
+                                  default="bogus12345",
+                                  max_length=1024 * 1024,
+                                  verbose_name="Database Password",
                                   )
     dbTimeStampOfLastSave = models.DateTimeField(
-                                                 null = True,
-                                                 verbose_name = "Last Save",
-                                                 help_text = "Date/Time of last Password Safe save",
+                                                 null=True,
+                                                 verbose_name="Last Save",
+                                                 help_text="Date/Time of last Password Safe save",
                                                  )
     dbLastSaveApp = models.CharField(
-                                     null = True,
-                                     verbose_name = "Last Save App",
-                                     max_length = 4096,
+                                     null=True,
+                                     verbose_name="Last Save App",
+                                     max_length=4096,
                                      )
     dbLastSaveHost = models.CharField(
-                                     null = True,
-                                     verbose_name = "Last Save Host",
-                                     max_length = 4096,
+                                     null=True,
+                                     verbose_name="Last Save Host",
+                                     max_length=4096,
                                      )
     dbLastSaveUser = models.CharField(
-                                     null = True,
-                                     verbose_name = "Last Save User",
-                                     max_length = 4096,
+                                     null=True,
+                                     verbose_name="Last Save User",
+                                     max_length=4096,
                                      )
     # Cache params
     fileLastModified = models.DateTimeField(
-                                            null = False,
-                                            verbose_name = "File Last Modified",
-                                            editable = False,
+                                            null=False,
+                                            verbose_name="File Last Modified",
+                                            editable=False,
                                             )
     fileLastSize = models.IntegerField(
-                                      null = False,
-                                      verbose_name = "File Last Size",
-                                      editable = False,
+                                      null=False,
+                                      verbose_name="File Last Size",
+                                      editable=False,
                                       )
     entryUseCount = models.IntegerField(
-                                      null = False,
-                                      verbose_name = "Use Count",
-                                      help_text = "The number of times that this entry has been used. ",
-                                      default = 0,
-                                      editable = False,
+                                      null=False,
+                                      verbose_name="Use Count",
+                                      help_text="The number of times that this entry has been used. ",
+                                      default=0,
+                                      editable=False,
                                       )
     entryLastRefreshed = models.DateTimeField(
-                                            null = False,
-                                            verbose_name = "Cache Entry Last Refreshed",
-                                            help_text = "The last time the cached entry was updated from the on-disk safe",
-                                            editable = False,
-                                            auto_now_add = True,
+                                            null=False,
+                                            verbose_name="Cache Entry Last Refreshed",
+                                            help_text="The last time the cached entry was updated from the on-disk safe",
+                                            editable=False,
+                                            auto_now_add=True,
                                             )
 
-    def onRefresh(self, save = True):
+    def onRefresh(self, save=True):
         """ This cache entry has been refreshed """
         import datetime
         self.entryUseCount = 0
@@ -330,7 +335,7 @@ class MemPSafe(models.Model):
         if save:
             self.save()
 
-    def onUse(self, save = True):
+    def onUse(self, save=True):
         """ The safe has been used """
         self.entryUseCount += 1
         if save:
@@ -338,7 +343,7 @@ class MemPSafe(models.Model):
 
     # TODO: Add in safe HMAC validation checks too
 
-    def todict(self, getEntries = True, getEntryHistory = True):
+    def todict(self, getEntries=True, getEntryHistory=True):
         """ Return an XML-RPC safe dictionary of the data. Null 
         fields are deleted! """
         ret = {
@@ -353,11 +358,12 @@ class MemPSafe(models.Model):
              'Last Save User':self.dbLastSaveUser,
              }
         if getEntries:
-            ret['Entries'] = [i.todict(history = getEntryHistory) for i in self.mempsafeentry_set.all()]
+            ret['Entries'] = [i.todict(history=getEntryHistory) for i in self.mempsafeentry_set.all()]
         for k, v in ret.items():
             if v is None:
                 del ret[k]
         return ret
+admin.site.register(MemPSafe)
 
 
 class MemPsafeEntry(models.Model):
@@ -369,104 +375,104 @@ class MemPsafeEntry(models.Model):
                            )
     safe = models.ForeignKey(
                              MemPSafe,
-                             null = False,
-                             verbose_name = "Password Safe",
+                             null=False,
+                             verbose_name="Password Safe",
                              )
     # FIXME: UUID field?
     uuid = models.CharField(
                             # can't use as PK as two psafes may have the same uuid
                             # primary_key = True,
-                            null = False,
+                            null=False,
                             # Make it a callable otherwise all will default to the same (at least within one instance)
-                            default = lambda: str(uuid4()),
-                            max_length = 36,
-                            verbose_name = "UUID",
-                            help_text = "Entry GUID",
-                            editable = False,
+                            default=lambda: str(uuid4()),
+                            max_length=36,
+                            verbose_name="UUID",
+                            help_text="Entry GUID",
+                            editable=False,
                             )
     group = models.CharField(
-                             null = True,
-                             default = None,
-                             max_length = 4096,
-                             verbose_name = "Group",
-                             help_text = "Dot separated group listing for the entry",
+                             null=True,
+                             default=None,
+                             max_length=4096,
+                             verbose_name="Group",
+                             help_text="Dot separated group listing for the entry",
                              )
     title = models.CharField(
-                             null = True,
-                             default = None,
-                             max_length = 4096,
-                             verbose_name = "Title",
+                             null=True,
+                             default=None,
+                             max_length=4096,
+                             verbose_name="Title",
                              )
     username = models.CharField(
-                             null = True,
-                             default = None,
-                             max_length = 4096,
-                             verbose_name = "Username",
+                             null=True,
+                             default=None,
+                             max_length=4096,
+                             verbose_name="Username",
                              )
     notes = models.TextField(
-                             null = True,
-                             default = None,
-                             max_length = 1024 * 1024,
-                             verbose_name = "Notes",
+                             null=True,
+                             default=None,
+                             max_length=1024 * 1024,
+                             verbose_name="Notes",
                              )
     password = models.CharField(
-                             null = True,
-                             default = None,
-                             max_length = 4096,
-                             verbose_name = "Password",
+                             null=True,
+                             default=None,
+                             max_length=4096,
+                             verbose_name="Password",
                              )
     creationTime = models.DateTimeField(
-                                        null = True,
-                                        default = None,
-                                        verbose_name = "Creation Time",
+                                        null=True,
+                                        default=None,
+                                        verbose_name="Creation Time",
                                         )
     passwordModTime = models.DateTimeField(
-                                           null = True,
-                                           default = None,
-                                           verbose_name = "Password Last Modification Time",
+                                           null=True,
+                                           default=None,
+                                           verbose_name="Password Last Modification Time",
                                            )
     accessTime = models.DateTimeField(
-                                      null = True,
-                                      default = None,
-                                      verbose_name = "Last Access Time",
+                                      null=True,
+                                      default=None,
+                                      verbose_name="Last Access Time",
                                       )
     passwordExpiryTime = models.DateTimeField(
-                                              null = True,
-                                              verbose_name = "Password Expiry Time",
+                                              null=True,
+                                              verbose_name="Password Expiry Time",
                                               )
     modTime = models.DateTimeField(
-                                   null = True,
-                                   verbose_name = "Last Modification Time",
+                                   null=True,
+                                   verbose_name="Last Modification Time",
                                    )
     # Don't use a URL field - We don't want to risk any validation
     # Plus psafe doesn't guarantee it's a URL
     url = models.CharField(
-                           null = True,
-                           default = None,
-                           max_length = 4096,
-                           verbose_name = "URL",
+                           null=True,
+                           default=None,
+                           max_length=4096,
+                           verbose_name="URL",
                            )
     autotype = models.CharField(
-                           null = True,
-                           default = None,
-                           max_length = 4096,
-                           verbose_name = "Autotype String",
+                           null=True,
+                           default=None,
+                           max_length=4096,
+                           verbose_name="Autotype String",
                            )
     runCommand = models.CharField(
-                           null = True,
-                           default = None,
-                           max_length = 4096,
-                           verbose_name = "Run Command",
+                           null=True,
+                           default=None,
+                           max_length=4096,
+                           verbose_name="Run Command",
                            )
     # Don't use an email field as psafe doesn't make any guarantees about the value
     email = models.CharField(
-                           null = True,
-                           default = None,
-                           max_length = 4096,
-                           verbose_name = "Email",
+                           null=True,
+                           default=None,
+                           max_length=4096,
+                           verbose_name="Email",
                            )
 
-    def todict(self, history = True):
+    def todict(self, history=True):
         """ Return an XML-RPC safe dictionary of the data. Null 
         fields are deleted! Field names (keys) should be identical
         to those in pypwsafe's records. """
@@ -489,7 +495,7 @@ class MemPsafeEntry(models.Model):
              'Email':self.email,
              }
         if history:
-            ret['History'] = [dict(Password = i.password, CreationTime = i.creationTime) for i in self.mempasswordentryhistory_set.all()]
+            ret['History'] = [dict(Password=i.password, CreationTime=i.creationTime) for i in self.mempasswordentryhistory_set.all()]
         for k, v in ret.items():
             if v is None:
                 del ret[k]
@@ -498,26 +504,30 @@ class MemPsafeEntry(models.Model):
     def onUse(self):
         """ The entry was used. Update the counters on our parent mempsafe """
         self.safe.onUse()
-        
+
     def getHistory(self):
         """ Return all old passwords, in order """
         return self.mempasswordentryhistory_set.all().order_by('creationTime')
+admin.site.register(MemPsafeEntry)
+
 
 class MemPasswordEntryHistory(models.Model):
     """ Old passwords for the given entry """
     entry = models.ForeignKey(
                               MemPsafeEntry,
-                              null = False,
-                              verbose_name = "Entry",
+                              null=False,
+                              verbose_name="Entry",
                               )
     password = models.CharField(
-                             null = True,
-                             default = None,
-                             max_length = 4096,
-                             verbose_name = "Old Password",
+                             null=True,
+                             default=None,
+                             max_length=4096,
+                             verbose_name="Old Password",
                              )
     creationTime = models.DateTimeField(
-                                        null = True,
-                                        default = None,
-                                        verbose_name = "Creation Time",
+                                        null=True,
+                                        default=None,
+                                        verbose_name="Creation Time",
                                         )
+admin.site.register(MemPasswordEntryHistory)
+
