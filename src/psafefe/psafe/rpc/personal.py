@@ -12,7 +12,7 @@
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
+#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #===============================================================================
 ''' The user's personal psafe control
 Created on Aug 16, 2011
@@ -26,7 +26,7 @@ from psafefe.psafe.models import *
 from psafefe.psafe.functions import setDatabasePasswordByUser
 
 # Psafe entry methods
-@rpcmethod(name = 'psafe.personal.setPsafePasswordByPK', signature = ['boolean', 'string', 'string', 'int', 'string'])
+@rpcmethod(name='psafe.personal.setPsafePasswordByPK', signature=['boolean', 'string', 'string', 'int', 'string'])
 @auth
 def setPsafePasswordByPK(username, password, safePK, safePassword, **kw):
     """ Update the given user's personal psafe to include the password to the given safe.  
@@ -43,25 +43,25 @@ def setPsafePasswordByPK(username, password, safePK, safePassword, **kw):
     @raise EntryDoesntExistError: The safe you are trying to save a password for doesn't exist or the requesting user doesn't have access to it.  
     """
     try:
-        pws = PasswordSafe.objects.get(pk = safePK)
+        pws = PasswordSafe.objects.get(pk=safePK)
     except PasswordSafe.DoesNotExist:
         raise EntryDoesntExistError
-    
+
     repo = pws.repo
-    if repo.user_can_access(kw['user'], mode = "R"):
+    if repo.user_can_access(kw['user'], mode="R"):
         # User should have access to the requested safe
         setDatabasePasswordByUser(
-                                  user = kw['user'],
-                                  userPassword = password,
-                                  psafe = pws,
-                                  psafePassword = safePassword,
-                                  wait = True,
+                                  user=kw['user'],
+                                  userPassword=password,
+                                  psafe=pws,
+                                  psafePassword=safePassword,
+                                  wait=True,
                                   )
         return True
     # User doesn't have access so it might as well not exist
     raise EntryDoesntExistError
 
-@rpcmethod(name = 'psafe.personal.setPsafePasswordByUUID', signature = ['boolean', 'string', 'string', 'int', 'string'])
+@rpcmethod(name='psafe.personal.setPsafePasswordByUUID', signature=['boolean', 'string', 'string', 'int', 'string'])
 @auth
 def setPsafePasswordByUUID(username, password, safeUUID, safePassword, **kw):
     """ Update the given user's personal psafe to include the password to the given safe.
@@ -79,19 +79,19 @@ def setPsafePasswordByUUID(username, password, safeUUID, safePassword, **kw):
     """
     try:
         # TODO: Add in better handling of more than one entry with the same UUID
-        pws = PasswordSafe.objects.get(uuid = safeUUID)
+        pws = PasswordSafe.objects.get(uuid=safeUUID)
     except PasswordSafe.DoesNotExist:
         raise EntryDoesntExistError
-    
+
     repo = pws.repo
-    if repo.user_can_access(kw['user'], mode = "R"):
+    if repo.user_can_access(kw['user'], mode="R"):
         # User should have access to the requested safe
         setDatabasePasswordByUser(
-                                  user = kw['user'],
-                                  userPassword = password,
-                                  psafe = pws,
-                                  psafePassword = safePassword,
-                                  wait = True,
+                                  user=kw['user'],
+                                  userPassword=password,
+                                  psafe=pws,
+                                  psafePassword=safePassword,
+                                  wait=True,
                                   )
         return True
     # User doesn't have access so it might as well not exist
@@ -99,7 +99,7 @@ def setPsafePasswordByUUID(username, password, safeUUID, safePassword, **kw):
 
 
 
-@rpcmethod(name = 'psafe.personal.createPersonalPSafe', signature = ['boolean', 'string', 'string'])
+@rpcmethod(name='psafe.personal.createPersonalPSafe', signature=['boolean', 'string', 'string'])
 @auth
 def createPersonalPSafe(username, password, **kw):
     """ Create and initialize a personal psafe for the calling user if the user 
@@ -112,6 +112,6 @@ def createPersonalPSafe(username, password, **kw):
     @return: boolean, True on success, error otherwise
     """
     from psafefe.psafe.functions import getUsersPersonalSafe
-    p = getUsersPersonalSafe(user = kw['user'], userPassword = password, wait = True)
+    p = getUsersPersonalSafe(user=kw['user'], userPassword=password, wait=True)
     return True
 

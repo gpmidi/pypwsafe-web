@@ -13,7 +13,7 @@
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html 
+#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #===============================================================================
 ''' Tasks to update/delete/create password entries and password safes
 All write activity is done synchronously to reduce the possibility of
@@ -30,29 +30,29 @@ from pypwsafe import PWSafe3, Record
 from psafefe.psafe.tasks.load import loadSafe
 import datetime
 from socket import getfqdn
-import re 
+import re
 
 import logging
 log = logging.getLogger("psafefe.psafe.tasks.write")
 log.debug('initing')
 
-@task(expires = 3600)
-def newSafe(psafePK, psafePassword, userPK = None, dbName = None, dbDesc = None):
+@task(expires=3600)
+def newSafe(psafePK, psafePassword, userPK=None, dbName=None, dbDesc=None):
     """ Create a new, empty psafe (on disk) and then
     load it into the cache. Will not error or overwrite
     duplicate safes. 
     TODO: Clarify this description
     """
     if userPK:
-        user = User.objects.get(pk = userPK)
+        user = User.objects.get(pk=userPK)
     else:
         user = None
-    psafe = PasswordSafe.objects.get(pk = psafePK)
-    
+    psafe = PasswordSafe.objects.get(pk=psafePK)
+
     pypwsafe = PWSafe3(
-                     filename = psafe.psafePath(),
-                     password = psafePassword,
-                     mode = "RW",
+                     filename=psafe.psafePath(),
+                     password=psafePassword,
+                     mode="RW",
                      )
     # Set details
     pypwsafe.setVersion()
@@ -70,7 +70,7 @@ def newSafe(psafePK, psafePassword, userPK = None, dbName = None, dbDesc = None)
     if dbDesc:
         pypwsafe.setDbDesc(dbDesc)
     pypwsafe.save()
-    assert loadSafe(psafe_pk = psafePK, password = psafePassword, force = True)
+    assert loadSafe(psafe_pk=psafePK, password=psafePassword, force=True)
 
 
 def _matchVale(record, fieldName, fieldValue):
@@ -96,21 +96,21 @@ def _matchRE(record, fieldName, cmpRegex):
         return True
     log.debug("Field %r from %r is %r. No match. ", fieldName, record, actualValue)
     return False
- 
-def _findRecords(psafe, pypwsafe, refilters, vfilters, maxMatches = None):
+
+def _findRecords(psafe, pypwsafe, refilters, vfilters, maxMatches=None):
     """ Yields all records matching the given query. """
     # Compile the regexs
     refiltersCmp = {}
     for name, raw in refilters.items():
         log.debug("Compiling %r for %r", raw, name)
         refiltersCmp[name] = re.compile(refilters)
-    
+
     matchCount = 0
     for record in pypwsafe.getEntries():
         log.log(5, "Checking %r", record)
         matched = True
         for field, mvalue in vfilters.items():
-            if not _matchVale(record = record, fieldName = field, fieldValue = mvalue):
+            if not _matchVale(record=record, fieldName=field, fieldValue=mvalue):
                 log.log(5, "Value match for %r failed", field)
                 matched = False
                 break
@@ -118,7 +118,7 @@ def _findRecords(psafe, pypwsafe, refilters, vfilters, maxMatches = None):
         if not matched:
             continue
         for field, cmpRegex in refiltersCmp.items():
-            if not _matchRE(record = record, fieldName = field, cmpRegex = cmpRegex):
+            if not _matchRE(record=record, fieldName=field, cmpRegex=cmpRegex):
                 matched = False
                 break
         # Found one
@@ -132,12 +132,12 @@ def _findRecords(psafe, pypwsafe, refilters, vfilters, maxMatches = None):
                 break
     log.debug("Done finding records. Found %r", matchCount)
 
-def _update(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches = None):
+def _update(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches=None):
     """ Update the matching records 
     @return: The number of records that were updated. 
     """
     assert action == "update"
-    toUpdate = list(_findRecords(psafe = psafe, pypwsafe = pypwsafe, refilters = refilters, vfilters = vfilters, maxMatches = None))
+    toUpdate = list(_findRecords(psafe=psafe, pypwsafe=pypwsafe, refilters=refilters, vfilters=vfilters, maxMatches=None))
     for record in toUpdate:
         for fieldName, newValue in changes.items():
             if fieldName == "Password":
@@ -149,12 +149,12 @@ def _update(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches = 
                     log.info("Couldn't set field %r on %r to %r", fieldName, record, newValue)
     return len(toUpdate)
 
-def _delete(psafe, pypwsafe, action, refilters, vfilters, maxMatches = None):
+def _delete(psafe, pypwsafe, action, refilters, vfilters, maxMatches=None):
     """ Delete the matching records 
     @return: The number of records that were deleted. 
     """
     assert action == "delete"
-    toUpdate = _findRecords(psafe = psafe, pypwsafe = pypwsafe, refilters = refilters, vfilters = vfilters, maxMatches = None)
+    toUpdate = _findRecords(psafe=psafe, pypwsafe=pypwsafe, refilters=refilters, vfilters=vfilters, maxMatches=None)
     deleteCount = 0
     for record in toUpdate:
         try:
@@ -181,7 +181,7 @@ def _add(psafe, pypwsafe, action, changes):
     pypwsafe.records.insert(0, record)
     return record
 
-def _addUpdate(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches = None):
+def _addUpdate(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches=None):
     """ Update the matching records 
     @return: dict(
             updated = The number of records updated. Includes the one added if no updates are made. 
@@ -190,43 +190,43 @@ def _addUpdate(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches
     """
     assert action == "add-update"
     log.debug("Going to add-update %r", pypwsafe)
-    updatedCount = _update(psafe = psafe, pypwsafe = pypwsafe, action = "update", refilters = refilters, vfilters = vfilters, changes = changes, maxMatches = maxMatches)
+    updatedCount = _update(psafe=psafe, pypwsafe=pypwsafe, action="update", refilters=refilters, vfilters=vfilters, changes=changes, maxMatches=maxMatches)
     if updatedCount == 0:
         log.debug("Didn't update any records. Creating a new one")
-        record = _add(psafe = psafe, pypwsafe = pypwsafe, action = "add", changes = changes)
-        return dict(updated = 1, newRecord = record)
-    return dict(updated = updatedCount, newRecord = None)
+        record = _add(psafe=psafe, pypwsafe=pypwsafe, action="add", changes=changes)
+        return dict(updated=1, newRecord=record)
+    return dict(updated=updatedCount, newRecord=None)
 
 def _action(psafe, pypwsafe, **kw):
     """ Run the requested action. Returns the number of changes made. """
     if not 'action' in kw:
         raise KeyError, "The 'action' isn't specified"
     if kw['action'] == 'add':
-        r = _add(psafe = psafe, pypwsafe = pypwsafe, **kw)
+        r = _add(psafe=psafe, pypwsafe=pypwsafe, **kw)
         return 1
     if kw['action'] == 'add-update':
-        r = _addUpdate(psafe = psafe, pypwsafe = pypwsafe, **kw)
+        r = _addUpdate(psafe=psafe, pypwsafe=pypwsafe, **kw)
         return r['updated']
     if kw['action'] == 'delete':
-        return _delete(psafe = psafe, pypwsafe = pypwsafe, **kw)
+        return _delete(psafe=psafe, pypwsafe=pypwsafe, **kw)
     if kw['action'] == 'update':
-        return _update(psafe = psafe, pypwsafe = pypwsafe, **kw)
+        return _update(psafe=psafe, pypwsafe=pypwsafe, **kw)
     raise ValueError, "%r isn't a valid action" % kw['action']
 
 # TODO: Add support for values based on regexs
 # TODO: Add support for using Django templates and maybe value substitution from other fields in value setting
-@task(expires = 3600)
+@task(expires=3600)
 def modifyEntries(
                   psafePK,
                   psafePassword,
                   # Changes to make
-                  actions = [],
+                  actions=[],
                   # What to do if an error occurs
-                  # fail: If an error occurs, stop immediately. No changes should be made to the psafe. 
-                  # skip: Skip over the action that failed and complete the other actions. 
-                  onError = 'fail',
+                  # fail: If an error occurs, stop immediately. No changes should be made to the psafe.
+                  # skip: Skip over the action that failed and complete the other actions.
+                  onError='fail',
                   # If True, update the memory-db cache after the update is done
-                  updateCache = True,
+                  updateCache=True,
                   ):
     """ Add/update/delete/etc multiple password safe entries.
     @note: If no actions are given, then the safe will be opened and then saved. Post-save may be slightly different than pre-save in such cases, if the pypwsafe api "corrects" anything or does anything differently. 
@@ -279,43 +279,43 @@ def modifyEntries(
                 },
             ]
     """
-    psafe = PasswordSafe.objects.get(pk = psafePK)
+    psafe = PasswordSafe.objects.get(pk=psafePK)
     log.debug("Going to change entries from %r", psafe)
     pypwsafe = PWSafe3(
-                     filename = psafe.psafePath(),
-                     password = psafePassword,
-                     mode = "RW",
+                     filename=psafe.psafePath(),
+                     password=psafePassword,
+                     mode="RW",
                      )
-    ret = dict(errors = [], changes = 0)
+    ret = dict(errors=[], changes=0)
     log.debug("Going to lock safe")
-    pypwsafe.lock()    
+    pypwsafe.lock()
     try:
         log.debug("Lock acquired")
         for action in actions:
             log.debug("Going to %r", action['action'])
             if onError == "fail":
-                ret['changes'] += _action(psafe = psafe, pypwsafe = pypwsafe, **action)
+                ret['changes'] += _action(psafe=psafe, pypwsafe=pypwsafe, **action)
             elif onError == "skip":
                 try:
-                    ret['changes'] += _action(psafe = psafe, pypwsafe = pypwsafe, **action)
+                    ret['changes'] += _action(psafe=psafe, pypwsafe=pypwsafe, **action)
                 except Exception, e:
                     log.warn("There was an error while updating %r per %r", pypwsafe, action)
                     ret['errors'].append(
                                          dict(
-                                              action = action,
-                                              error = repr(e),
-                                              traceback = None,  # TODO: Add traceback
+                                              action=action,
+                                              error=repr(e),
+                                              traceback=None,  # TODO: Add traceback
                                               )
                                          )
         pypwsafe.save()
     finally:
         log.debug("Going to unlock safe")
         pypwsafe.unlock()
-    
+
     if updateCache:
         log.debug("Going to update the ram cache for %r", pypwsafe)
-        assert loadSafe(psafe_pk = psafePK, password = psafePassword, force = True)
-        
+        assert loadSafe(psafe_pk=psafePK, password=psafePassword, force=True)
+
     return ret
-    
-   
+
+
