@@ -29,6 +29,7 @@ from psafefe.pws.tasks.device import *
 import psafefe.pws.tasks.write
 from uuid import uuid4
 
+
 @rpcmethod(name = 'psafefe.pws.write.addUpdateDevice', signature = ['struct', 'string', 'string', 'int', 'int', 'string', 'array', 'struct', 'struct'])
 @auth
 def addUpdateDevice(username, password, locID, safeID, device, passwords, entryLogins = {}, entryInfo = {}, **kw):
@@ -68,9 +69,10 @@ def addUpdateDevice(username, password, locID, safeID, device, passwords, entryL
         raise InvalidIDError, "PK %r not found in psafe list" % safeID
     
     # Now know the user should have access to it and that it's already known
-    r = psafefe.pws.tasks.write.addUpdateDevice.delay(device = device, loc = loc.path, psafeLoc = safe.filename, logins = entryLogins, info = entryInfo, passwords = passwords)
+    r = psafefe.pws.tasks.write.addUpdateDevice.delay(device = device, loc = loc.path, psafeLoc = safe.filename, logins = entryLogins, info = entryInfo, passwords = passwords)  # @UndefinedVariable
     log.debug("Ran %r" % r)
     return r.wait()
+    
     
 @rpcmethod(name = 'psafefe.pws.write.addUpdateByUUID', signature = ['struct', 'string', 'string', 'int', 'int', 'string', 'array', 'struct'])
 @auth
@@ -109,7 +111,7 @@ def addUpdateByUUID(username, password, locID, safeID, uuid, passwords, entryInf
         raise InvalidIDError, "PK %r not found in psafe list" % safeID
     
     # Now know the user should have access to it and that it's already known
-    r = psafefe.pws.tasks.write.addUpdateByUUID.delay(uuid = uuid, loc = loc.path, psafeLoc = safe.filename, info = entryInfo, passwords = passwords)
+    r = psafefe.pws.tasks.write.addUpdateByUUID.delay(uuid = uuid, loc = loc.path, psafeLoc = safe.filename, info = entryInfo, passwords = passwords)  # @UndefinedVariable
     log.debug("Ran %r" % r)
     return r.wait()
     
