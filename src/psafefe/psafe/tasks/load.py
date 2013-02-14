@@ -32,6 +32,7 @@ from psafefe.psafe.errors import *
 from pypwsafe import PWSafe3, ispsafe3
 import stat
 from datetime import timedelta
+import datetime
 
 import logging
 log = logging.getLogger("psafefe.psafe.tasks.load")
@@ -113,7 +114,7 @@ def refreshListedSafes(psafePKs=[]):
         try:
             psafe = PasswordSafe.objects.get(pk=psafePK)
             mempsafe = psafe.mempsafe
-            #mempsafe.onUpdate()
+            # mempsafe.onUpdate()
             log.debug("Going to update cache for %r", psafe)
 
             assert loadSafe(psafe_pk=psafePK, password=mempsafe.dbPassword, force=True)
@@ -207,11 +208,15 @@ def loadSafe(psafe_pk, password, force=False):
                             )
 
     # Check if we need to
-    if not force and os.stat(psafe.psafePath())[stat.ST_MTIME] == memPSafe.fileLastModified and memPSafe.fileLastSize == os.stat(psafe.psafePath())[stat.ST_SIZE]:
+    fileDT = datetime.datetime.fromtimestamp(os.stat(psafe.psafePath())[stat.ST_MTIME])
+    modifiedDiff = abs(fileDT - memPSafe.fileLastModified)
+    sizeDiff = abs(memPSafe.fileLastSize - os.stat(psafe.psafePath())[stat.ST_SIZE])
+    log.debug("Found a size diff of %r and a last-modified diff of %r", sizeDiff, modifiedDiff)
+    if not force and modifiedDiff < datetime.timedelta(seconds=1) and sizeDiff == 0:
+        log.debug("No major change in size of last-modified. Not loading. ")
         return False
 
     # Save first, just in case it changes while we are reading already read data
-    import datetime
     memPSafe.fileLastModified = datetime.datetime.fromtimestamp(os.stat(psafe.psafePath())[stat.ST_MTIME])
     memPSafe.fileLastSize = os.stat(psafe.psafePath())[stat.ST_SIZE]
 
@@ -251,14 +256,14 @@ def loadSafe(psafe_pk, password, force=False):
     for entry in pypwsafe.getEntries():
         # Find the entry to create it (by uuid)
         uuid = unicode(entry.getUUID())
-        log.debug("Looking for entry UUID of %r in a list of %d entries", uuid,memPSafe.mempsafeentry_set.all().count())
+        log.debug("Looking for entry UUID of %r in a list of %d entries", uuid, memPSafe.mempsafeentry_set.all().count())
         try:
             memEntry = memPSafe.mempsafeentry_set.get(uuid=uuid)
-            log.debug("Found entry %r for %r",memEntry,uuid)
+            log.debug("Found entry %r for %r", memEntry, uuid)
             updated[memEntry.uuid] = remaining.pop(memEntry.uuid)
             log.debug("Removed from remaining dict")
         except MemPsafeEntry.DoesNotExist, e:
-            log.exception("Failed to find entry for %r. Creating new entry. ",uuid)
+            log.exception("Failed to find entry for %r. Creating new entry. ", uuid)
             memEntry = MemPsafeEntry(
                                    safe=memPSafe,
                                    uuid=uuid,
