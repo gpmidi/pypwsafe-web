@@ -88,6 +88,9 @@ def addUpdateDevice(username, password, repoID, safeID, deviceID, info, **kw):
                                         },
                             'changes':{
                                        'Password':shellPassword,
+                                       'Group':deviceID,
+                                       'Username':shellUser,
+                                       'Title':"Logins",
                                        },
                             })
     if 'guiLogins' in info:
@@ -102,6 +105,9 @@ def addUpdateDevice(username, password, repoID, safeID, deviceID, info, **kw):
                                         },
                             'changes':{
                                        'Password':guiPassword,
+                                       'Group':deviceID,
+                                       'Username':guiUser,
+                                       'Title':"GUI Logins",
                                        },
                             })
     if 'deviceInfo' in info:
@@ -116,6 +122,9 @@ def addUpdateDevice(username, password, repoID, safeID, deviceID, info, **kw):
                                         },
                             'changes':{
                                        'Password':infoValue,
+                                       'Group':deviceID,
+                                       'Username':infoKey,
+                                       'Title':"Info",
                                        },
                             })
 
