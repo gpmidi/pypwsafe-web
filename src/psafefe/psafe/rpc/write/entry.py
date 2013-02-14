@@ -72,6 +72,15 @@ def addUpdateDevice(username, password, repoID, safeID, deviceID, info, **kw):
         log.warning("Got %r while trying to fetch Password Safe %r", e, safeID)
         raise EntryDoesntExistError("No safe with an ID of %r" % safeID)
 
+    # Convert possible string into a list
+    if isinstance(deviceID, list):
+        log.debug("DeviceID is already a list, doing nothing to %r", deviceID)
+    elif isinstance(deviceID, str):
+        deviceID = deviceID.split('.')
+        log.debug("DeviceID is a string, split into %r", deviceID)
+    else:
+        raise ValueError("Expected deviceID to be a string or a list, not %r" % deviceID)
+
     psafePassword = getDatabasePasswordByUser(kw['user'], password, safe, wait=True)
 
     actions = []
