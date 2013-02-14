@@ -249,9 +249,10 @@ def loadSafe(psafe_pk, password, force=False):
 
     for entry in pypwsafe.getEntries():
         # Find the entry to create it (by uuid)
-        log.debug("Looking for entry UUID of %r", entry.getUUID())
-        if entry.getUUID() in remaining:
-            updated[entry.getUUID()] = remaining.pop(entry.getUUID())
+        uuid = str(entry.getUUID())
+        log.debug("Looking for entry UUID of %r", uuid)
+        if uuid in remaining:
+            updated[uuid] = remaining.pop(uuid)
         else:
             memEntry = MemPsafeEntry(
                                    safe=memPSafe,
