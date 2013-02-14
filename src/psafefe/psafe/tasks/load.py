@@ -113,7 +113,7 @@ def refreshListedSafes(psafePKs=[]):
         try:
             psafe = PasswordSafe.objects.get(pk=psafePK)
             mempsafe = psafe.mempsafe
-            mempsafe.onUpdate()
+            #mempsafe.onUpdate()
             log.debug("Going to update cache for %r", psafe)
 
             assert loadSafe(psafe_pk=psafePK, password=mempsafe.dbPassword, force=True)
@@ -244,20 +244,24 @@ def loadSafe(psafe_pk, password, force=False):
         if i.uuid in remaining:
             raise DuplicateUUIDError("Entry %r has the same UUID as %r" % (i, remaining[i.uuid]))
         else:
-            remaining[i.uuid] = i
+            remaining[unicode(i.uuid)] = i
 
     updated = {}
 
     for entry in pypwsafe.getEntries():
         # Find the entry to create it (by uuid)
-        uuid = entry.getUUID()
-        log.debug("Looking for entry UUID of %r", uuid)
+        uuid = unicode(entry.getUUID())
+        log.debug("Looking for entry UUID of %r in a list of %d entries", uuid,memPSafe.mempsafeentry_set.all().count())
         try:
-            memEntry = safeEntries.get(uuid=uuid)
+            memEntry = memPSafe.mempsafeentry_set.get(uuid=uuid)
+            log.debug("Found entry %r for %r",memEntry,uuid)
             updated[memEntry.uuid] = remaining.pop(memEntry.uuid)
+            log.debug("Removed from remaining dict")
         except MemPsafeEntry.DoesNotExist, e:
+            log.exception("Failed to find entry for %r. Creating new entry. ",uuid)
             memEntry = MemPsafeEntry(
                                    safe=memPSafe,
+                                   uuid=uuid,
                                    )
         # FIXME: Add in a catch for multiple entries found with the same UUID for the same safe
         # Update the entry
