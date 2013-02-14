@@ -97,9 +97,11 @@ def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe=None, wait=True)
     if len(ents) == 1:
         return ents[0].password
     elif len(ents) == 0:
-        raise NoPasswordForPasswordSafe, "User %r doesn't have the password for safe %d" % (user, psafe.pk)
+        raise NoPasswordForPasswordSafe("User %r doesn't have the password for safe %d" % (user, psafe.pk))
     else:
-        raise ValueError, "Unexpected number of entries matched search for a psafe entries. Got %d results. " % len(ents)
+        # "Unexpected number of entries matched search for a psafe entries. Got %d results. " % len(ents)
+        return ents[0].password
+
 
 
 def setDatabasePasswordByUser(user, userPassword, psafe, psafePassword, wait=True):
