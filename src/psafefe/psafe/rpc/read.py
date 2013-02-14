@@ -25,8 +25,39 @@ from psafefe.psafe.rpc.auth import auth
 from psafefe.psafe.models import *
 from uuid import UUID
 from django.conf import settings
+from psafefe.psafe.functions import getDatabasePasswordByUser
+
 
 # Entry methods
+@rpcmethod(name = 'psafe.read.getEntrysByGroup', signature = ['struct', 'string', 'string', 'int', 'string'])
+@auth
+def getEntrysByGroup(username, password, safeID, groupName, **kw):
+    """ Return a struct representing the requested entry from the cache. 
+    @note: Will error out if not in the cache. 
+    @param username: Requesting user's login
+    @type username: string
+    @param password: Requesting user's login
+    @type password: string
+    @return: A list containing the entities properties
+    @raise EntryDoesntExistError: The requested entry doesn't exist or the user doesn't have permission to read it.
+    """
+    try:
+        safe = PasswordSafe.objects.get(pk = safeID)
+    except PasswordSafe.DoesNotExist, e:
+        log.warning("Got %r while trying to fetch Password Safe %r", e, safeID)
+        raise EntryDoesntExistError("No safe with an ID of %r" % safeID)
+    if safe.repo.user_can_access(user = kw['user'], mode = "R"):
+        log.debug("User %r is ok to access %r", kw['user'], safe.repo)
+    else:
+        log.warning("User %r is NOT allowed to access %r", kw['user'], safe.repo)
+        # raise NoPermissionError("User %r can't access this repo" % kw['user'])
+        raise EntryDoesntExistError
+    
+    psafePassword = getDatabasePasswordByUser(kw['user'], password, safe, wait = True)
+    memSafe = safe.getCached(canLoad = True, user = kw['user'], userPassword = password)
+    return [i.todict() for i in memSafe.mempsafeentry_set.filter(group = groupName)]
+
+
 @rpcmethod(name = 'psafe.read.getEntryByPK', signature = ['struct', 'string', 'string', 'int'])
 @auth
 def getEntryByPK(username, password, entPK, **kw):
