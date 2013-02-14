@@ -91,7 +91,7 @@ def getDatabasePasswordByUser(user, userPassword, psafe, ppsafe=None, wait=True)
     ents = MemPsafeEntry.objects.filter(safe=memsafe)
     ents = ents.filter(group="Password Safe Passwords.%d" % psafe.repo.pk)
     ents = ents.filter(title="PSafe id %d" % psafe.pk)
-    # ents = ents.filter(username = psafe.filename)
+    ents = ents.filter(username=psafe.filename)
 
     # Use len so we cache results instead of count
     if len(ents) == 1:
