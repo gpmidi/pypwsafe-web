@@ -32,7 +32,7 @@ from psafefe.psafe.tasks.write import modifyEntries
 
 
 @rpcmethod(
-           name='psafefe.psafe.write.entry.addUpdateDevice',
+           name='psafe.write.entry.addUpdateDevice',
            signature=[
                       # Return value
                       'struct',
