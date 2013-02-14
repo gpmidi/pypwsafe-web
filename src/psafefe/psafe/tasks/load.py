@@ -241,7 +241,7 @@ def loadSafe(psafe_pk, password, force=False):
     remaining = {}
     for i in MemPsafeEntry.objects.filter(safe=memPSafe):
         if i.uuid in remaining:
-            raise DuplicateUUIDError, "Entry %r has the same UUID as %r" % (i, remaining[i.uuid])
+            raise DuplicateUUIDError("Entry %r has the same UUID as %r" % (i, remaining[i.uuid]))
         else:
             remaining[i.uuid] = i
 
@@ -249,10 +249,9 @@ def loadSafe(psafe_pk, password, force=False):
 
     for entry in pypwsafe.getEntries():
         # Find the entry to create it (by uuid)
+        log.debug("Looking for entry UUID of %r", entry.getUUID())
         if entry.getUUID() in remaining:
-            memEntry = remaining[entry.getUUID()]
-            del remaining[entry.getUUID()]
-            updated[entry.getUUID()] = memEntry
+            updated[entry.getUUID()] = remaining.pop(entry.getUUID())
         else:
             memEntry = MemPsafeEntry(
                                    safe=memPSafe,
