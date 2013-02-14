@@ -208,13 +208,14 @@ def loadSafe(psafe_pk, password, force=False):
                             )
 
     # Check if we need to
-    fileDT = datetime.datetime.fromtimestamp(os.stat(psafe.psafePath())[stat.ST_MTIME])
-    modifiedDiff = abs(fileDT - memPSafe.fileLastModified)
-    sizeDiff = abs(memPSafe.fileLastSize - os.stat(psafe.psafePath())[stat.ST_SIZE])
-    log.debug("Found a size diff of %r and a last-modified diff of %r", sizeDiff, modifiedDiff)
-    if not force and modifiedDiff < datetime.timedelta(seconds=1) and sizeDiff == 0:
-        log.debug("No major change in size of last-modified. Not loading. ")
-        return False
+    if memPSafe.fileLastModified:
+        fileDT = datetime.datetime.fromtimestamp(os.stat(psafe.psafePath())[stat.ST_MTIME])
+        modifiedDiff = abs(fileDT - memPSafe.fileLastModified)
+        sizeDiff = abs(memPSafe.fileLastSize - os.stat(psafe.psafePath())[stat.ST_SIZE])
+        log.debug("Found a size diff of %r and a last-modified diff of %r", sizeDiff, modifiedDiff)
+        if not force and modifiedDiff < datetime.timedelta(seconds=1) and sizeDiff == 0:
+            log.debug("No major change in size of last-modified. Not loading. ")
+            return False
 
     # Save first, just in case it changes while we are reading already read data
     memPSafe.fileLastModified = datetime.datetime.fromtimestamp(os.stat(psafe.psafePath())[stat.ST_MTIME])
