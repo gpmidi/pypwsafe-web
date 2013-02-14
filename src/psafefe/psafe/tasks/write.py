@@ -79,8 +79,8 @@ def _matchVale(record, fieldName, fieldValue):
     except KeyError, e:
         log.debug("Field %r from %r doesn't exist. No match. ", fieldName, record, fieldValue)
         return False
-    if fieldValue == fieldName:
-        log.debug("Field %r from %r is %r. Matched exact value. ", fieldName, record, fieldValue)
+    if fieldValue == actualValue:
+        log.debug("Field %r from %r is %r. Matched exact value %r. ", fieldName, record, fieldValue, actualValue)
         return True
     log.debug("Field %r from %r is %r, not %r", fieldName, record, actualValue, fieldValue)
     return False
