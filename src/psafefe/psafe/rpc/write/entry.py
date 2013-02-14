@@ -80,6 +80,7 @@ def addUpdateDevice(username, password, repoID, safeID, deviceID, info, **kw):
         for shellUser, shellPassword in info['shellLogins'].items():
             actions.append({
                             'action':'add-update',
+                            'refilters':{},
                             'vfilters':{
                                         'Group':deviceID,
                                         'Username':shellUser,
@@ -93,6 +94,7 @@ def addUpdateDevice(username, password, repoID, safeID, deviceID, info, **kw):
         for guiUser, guiPassword in info['guiLogins'].items():
             actions.append({
                             'action':'add-update',
+                            'refilters':{},
                             'vfilters':{
                                         'Group':deviceID,
                                         'Username':guiUser,
@@ -106,6 +108,7 @@ def addUpdateDevice(username, password, repoID, safeID, deviceID, info, **kw):
         for infoKey, infoValue in info['deviceInfo'].items():
             actions.append({
                             'action':'add-update',
+                            'refilters':{},
                             'vfilters':{
                                         'Group':deviceID,
                                         'Username':infoKey,
