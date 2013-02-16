@@ -22,6 +22,9 @@ Created on Aug 16, 2011
 
 @author: Paulson McIntyre <paul@gpmidi.net>
 '''
+import logging
+log = logging.getLogger("psafefe.psafe.tasks.write")
+log.debug('initing')
 # from celery.task import task #@UnresolvedImport
 from celery.decorators import task  # @UnresolvedImport
 from psafefe.psafe.models import *  # @UnusedWildImport
@@ -32,9 +35,6 @@ import datetime
 from socket import getfqdn
 import re
 
-import logging
-log = logging.getLogger("psafefe.psafe.tasks.write")
-log.debug('initing')
 
 @task(expires=3600)
 def newSafe(psafePK, psafePassword, userPK=None, dbName=None, dbDesc=None):
@@ -85,6 +85,7 @@ def _matchVale(record, fieldName, fieldValue):
     log.debug("Field %r from %r is %r, not %r", fieldName, record, actualValue, fieldValue)
     return False
 
+
 def _matchRE(record, fieldName, cmpRegex):
     try:
         actualValue = record[fieldName]
@@ -96,6 +97,7 @@ def _matchRE(record, fieldName, cmpRegex):
         return True
     log.debug("Field %r from %r is %r. No match. ", fieldName, record, actualValue)
     return False
+
 
 def _findRecords(psafe, pypwsafe, refilters, vfilters, maxMatches=None):
     """ Yields all records matching the given query. """
@@ -132,6 +134,7 @@ def _findRecords(psafe, pypwsafe, refilters, vfilters, maxMatches=None):
                 break
     log.debug("Done finding records. Found %r", matchCount)
 
+
 def _update(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches=None):
     """ Update the matching records 
     @return: The number of records that were updated. 
@@ -149,6 +152,7 @@ def _update(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches=No
                     log.info("Couldn't set field %r on %r to %r", fieldName, record, newValue)
     return len(toUpdate)
 
+
 def _delete(psafe, pypwsafe, action, refilters, vfilters, maxMatches=None):
     """ Delete the matching records 
     @return: The number of records that were deleted. 
@@ -163,6 +167,7 @@ def _delete(psafe, pypwsafe, action, refilters, vfilters, maxMatches=None):
         except ValueError, e:
             log.warn("Failed to find and delete record %r in %r", record, pypwsafe)
     return deleteCount
+
 
 def _add(psafe, pypwsafe, action, changes):
     """ Add the given record
@@ -181,6 +186,7 @@ def _add(psafe, pypwsafe, action, changes):
     pypwsafe.records.insert(0, record)
     return record
 
+
 def _addUpdate(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches=None):
     """ Update the matching records 
     @return: dict(
@@ -197,6 +203,7 @@ def _addUpdate(psafe, pypwsafe, action, refilters, vfilters, changes, maxMatches
         return dict(updated=1, newRecord=record)
     return dict(updated=updatedCount, newRecord=None)
 
+
 def _action(psafe, pypwsafe, **kw):
     """ Run the requested action. Returns the number of changes made. """
     if not 'action' in kw:
@@ -211,7 +218,8 @@ def _action(psafe, pypwsafe, **kw):
         return _delete(psafe=psafe, pypwsafe=pypwsafe, **kw)
     if kw['action'] == 'update':
         return _update(psafe=psafe, pypwsafe=pypwsafe, **kw)
-    raise ValueError, "%r isn't a valid action" % kw['action']
+    raise ValueError("%r isn't a valid action" % kw['action'])
+
 
 # TODO: Add support for values based on regexs
 # TODO: Add support for using Django templates and maybe value substitution from other fields in value setting
@@ -230,20 +238,20 @@ def modifyEntries(
                   ):
     """ Add/update/delete/etc multiple password safe entries.
     @note: If no actions are given, then the safe will be opened and then saved. Post-save may be slightly different than pre-save in such cases, if the pypwsafe api "corrects" anything or does anything differently. 
-    
+
     Valid actions: 
         * update
         * delete
         * add
         * add-update
-        
+
     The <Options> are <field name>:<new field value> pairs as used in MemPsafeEntry's todict method. 
     The <Regex Filters> are <Field Name>:<Uncompiled Regex> pairs. 
     The <Value Filters> are <Field Name>:<Field Value> pairs. The field value must be EXACTLY the same. 
     All regex and value filters must match for the entry to be updated. 
     The 'maxMatches' field indicates the maximum number of entries to change/delete/etc. Defaults to None, 
         which means no limit.
-     
+
     Example actions: 
     actions=[
                 # Add an entry.
@@ -251,7 +259,7 @@ def modifyEntries(
                 'action':'add',
                 'changes':{ <Options> },
                 },
-                
+
                 # Delete all matching entries. 
                 {
                 'action':'delete',
