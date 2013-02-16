@@ -20,6 +20,10 @@ Created on Aug 21, 2011
 
 @author: Paulson McIntyre <paul@gpmidi.net>
 """
+import logging
+log = logging.getLogger('psafefe.psafe.rpc.write.safe')
+
+import os.path
 from rpc4django import rpcmethod
 from psafefe.psafe.rpc.errors import *
 from psafefe.psafe.rpc.auth import auth
@@ -27,4 +31,41 @@ from psafefe.psafe.models import *
 from uuid import UUID
 
 
+@rpcmethod(
+           name='psafe.write.safe.createSafe',
+           signature=[
+                      # Return value
+                      'struct',
+                      # Args
+                      'string', 'string', 'int', 'string',
+                      'string', 'string', 'string'
+                      ],
+           )
+@auth
+def createSafe(
+               username, password, repoID, safePassword,
+               safeFileName, safeName, safeDesc='', **kw
+               ):
+    safeFileName = os.path.basename(safeFileName)
 
+    nsafe = PasswordSafe(
+                           filename=safeFileName,
+                           repo=PasswordSafeRepo.objects.get(pk=repoID),
+                           owner=kw['user'],
+                           )
+    nsafe.save()
+    from psafefe.psafe.tasks import *
+    newSafe.delay(# @UndefinedVariable
+                  psafePK=nsafe.pk,
+                  psafePassword=safePassword,
+                  userPK=kw['user'].pk,
+                  dbName=safeName,
+                  dbDesc=safeDesc,
+                  ).wait()
+    # Try to refresh so we get the right info
+    nsafe = PasswordSafe.objects.get(pk=nsafe.pk)
+    ret = {
+           'uuid':nsafe.uuid,
+           'pk':nsafe.pk,
+           }
+    return ret
