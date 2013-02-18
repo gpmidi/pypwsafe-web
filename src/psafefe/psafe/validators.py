@@ -25,3 +25,8 @@ import os, os.path, sys
 def validate_r_ok(value):
     """ Ensure we have read-access to this folder """
     return os.access(value, os.R_OK)
+
+def validater_rw_ok(value):
+    """ Ensure we have read-access to this folder """
+    return os.access(value, os.R_OK)
+
