@@ -23,7 +23,8 @@ away indications as to if the entry exists but the user doesn't have permissions
 * Move all logic out of individual RPC calls and into tasks or helper functions
 ** Should help prevent RPC vs View logic being different
 * Update the Last Access Time for entries whenever the entry is accessed. 
-  
+* Make use of the 'extra' keyword argument for all logging calls.
+
 ### Helpful Sniplets ###
 
 ## Automatically create DB tables
