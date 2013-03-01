@@ -49,3 +49,6 @@ class InvalidUUIDError(ValueError):
 
 class MultipleEntriesExistError(KeyError):
     """ Multiple entries for the given key """
+
+class InvalidQueryError(ValueError):
+    """ One or more of the given search fields were invalid. """
