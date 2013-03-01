@@ -20,9 +20,9 @@ test settings. See link for test settings in the DB dict.
 * Consider creating a new psafe repo for each user's personal psafe files
 * Look into request timing differences in the RPC functions possibly giving 
 away indications as to if the entry exists but the user doesn't have permissions.
-* Move all logic out of indvidual RPC calls and into tasks or helper functions
+* Move all logic out of individual RPC calls and into tasks or helper functions
 ** Should help prevent RPC vs View logic being different
-  
+* Update the Last Access Time for entries whenever the entry is accessed. 
   
 ### Helpful Sniplets ###
 
