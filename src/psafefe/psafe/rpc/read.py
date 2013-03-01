@@ -126,7 +126,8 @@ def getEntryByUUID(username, password, entUUID, **kw):
     @type entUUID: string    
     @return: A dictionary containing the entities properties
     @raise InvalidUUIDError: The UUID given isn't in a valid format or contains invalid chars. 
-    @raise EntryDoesntExistError: The requested entry doesn't exist or the user doesn't have permission to read it. 
+    @raise EntryDoesntExistError: The requested entry doesn't exist or the user doesn't have permission to read it.
+    @raise MultipleEntriesExistError: Found more than one entry with the given UUID.  
     """
     try:
         uuid = UUID(entUUID)
@@ -143,8 +144,8 @@ def getEntryByUUID(username, password, entUUID, **kw):
     if len(found) == 1:
         return found[0]
     elif len(found) == 0:
-        raise EntryDoesntExistError, "Cound't locate %r" % entUUID
-    raise MultipleEntriesExistError, "Found %d entries for %r" % (len(found), entUUID)
+        raise EntryDoesntExistError("Cound't locate %r" % entUUID)
+    raise MultipleEntriesExistError("Found %d entries for %r" % (len(found), entUUID))
 
 #         Password Safe methods
 @rpcmethod(name='psafe.read.getSafeByPK', signature=['struct', 'string', 'string', 'int'])
