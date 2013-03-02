@@ -50,41 +50,69 @@ FILTER_FIELDS_MAPPING = {
                          }
 
 # Entry methods
-@rpcmethod(name = 'psafe.search.filterComplex', signature = ['struct', 'string', 'int', 'struct', 'struct'])
-@auth
-def filterComplex(username, password, safeID, include, exclude, **kw):
+def _filterComplex(username, password, safeIDs, include, exclude, **kw):
     """ 
     @param username: Requesting user's login
     @type username: string
     @param password: Requesting user's login
     @type password: string
-    @param safeID: The PK of the PasswordSafe object
-    @type safeID: int
+    @param safeIDs: The PKs of all psafe objects that should be included in the search. 
+    @type safeIDs: A list of ints
     @param include: A dict indicating what fields must match and possible values to match against.  
     @type include: A dict where keys are the fields names and the values are a list of possible values for matching entries.
     @param exclude: A dict indicating what fields/values must NOT match.   
     @type exclude: A dict where keys are the fields names and the values are a list of possible values for entries that should be excluded.
     @return: A list of dicts containing all matching entries
     @raise EntryDoesntExistError: The requested entry doesn't exist or the user doesn't have permission to read it.
-    @note: Valid fields: PK, UUID, Group, Title, Username, Notes, Password, Creation Time, Password Last Modification Time, Last Access Time, Password Expiry, Entry Last Modification Time, URL, AutoType, Run Command, Email.  
+    @raise InvalidQueryError: One or more of the include/exclude field names or list of values is not valid.
+    @note: Valid fields for filters: PK, UUID, Group, Title, Username, Notes, Password, Creation Time, Password Last Modification Time, Last Access Time, Password Expiry, Entry Last Modification Time, URL, AutoType, Run Command, Email.
+    
+    @warning: WHEN UPDATING THE ARG LIST OR THIS DOC STRING, MAKE SURE TO UPDATE THE RPC FUNCTIONS BELOW!  
     """
-    extra = dict(username = username, safeID = safeID)
-    try:
-        safe = PasswordSafe.objects.get(pk = safeID)
-    except PasswordSafe.DoesNotExist, e:
-        log.warning("Got %r while trying to fetch Password Safe %r", e, safeID, extra = extra)
-        raise EntryDoesntExistError("No safe with an ID of %r" % safeID)
-    if safe.repo.user_can_access(user = kw['user'], mode = "R"):
-        log.debug("User %r is ok to access %r", kw['user'], safe.repo, extra = extra)
-    else:
-        log.warning("User %r is NOT allowed to access %r", kw['user'], safe.repo, extra = extra)
-        # raise NoPermissionError("User %r can't access this repo" % kw['user'])
-        raise EntryDoesntExistError("No safe with an ID of %r" % safeID)
+    extra = dict(username = username, safeIDs = safeIDs, user = kw['user'],)
+    for safeID in safeIDs:
+        if not isinstance(safeID, int):
+            log.warn("The safeID/pk %r is not an int", safeID, extra = extra)
+            raise InvalidQueryError("The safeID/pk %r is not an int" % safeID)
+
+    if len(safeIDs) == 1:
+        extra['safePK'] = safeID
+
+    if not isinstance(safeIDs, list):
+        log.warn("The list of safeIDs/safePKs is not a list. Got type %r, value %r. ", type(safeIDs), safeIDs, extra = extra)
+        raise InvalidQueryError("The list of safeIDs/safePKs is not a list. Got %r." % type(safeIDs))
+
+    safes = PasswordSafe.objects.filter(pk__in = safeIDs).select_related()
+
+    # Let the user know which safeIDs couldn't be found.
+    if len(safes) != len(safeIDs):
+        log.warning("The list of PasswordSafe objects returned (%d) is a different length than the list of safeIDs (%d). ", len(safes), len(safeIDs), extra = extra)
+        for safeID in safeIDs:
+            if safes.filter(pk = safeID).count() == 0:
+                raise EntryDoesntExistError("No safe with an ID of %r" % safeID)
+
+    # Validate the user's access to all of the safes
+    for safe in safes:
+        if safe.repo.user_can_access(user = kw['user'], mode = "R"):
+            log.debug("User %r is ok to access %r", kw['user'], safe.repo, extra = extra)
+        else:
+            log.warning("User %r is NOT allowed to access %r", kw['user'], safe.repo, extra = extra)
+            # raise NoPermissionError("User %r can't access this repo" % kw['user'])
+            raise EntryDoesntExistError("No safe with an ID of %r" % safeID)
+        safes.append(safe)
+    extra['safes'] = safes
+
+    log.debug("User %r is querying %d safes", kw['user'], len(safes), extra = extra)
 
     # Get the cached entry or load it if needed
-    psafePassword = getDatabasePasswordByUser(kw['user'], password, safe, wait = True)
-    memSafe = safe.getCached(canLoad = True, user = kw['user'], userPassword = password)
-    extra['memSafePK'] = memSafe.pk
+    memSafes = {}
+    for safe in safes:
+        psafePassword = getDatabasePasswordByUser(kw['user'], password, safe, wait = True)
+        memSafes[safe.pk] = safe.getCached(canLoad = True, user = kw['user'], userPassword = password)
+
+    extra['memSafes'] = memSafes
+    if len(memSafes) == 1:
+        extra['memSafePK'] = memSafes.keys()[0]
 
     # Provide basic validation of the filters since the DB filter errors aren't passed on to the user
     for filterName, filterDict in [ ('include', include), ('exclude', exclude), ]:
@@ -100,8 +128,9 @@ def filterComplex(username, password, safeID, include, exclude, **kw):
                 if not isinstance(value, fieldType):
                     log.warning("User %r passed in value %r for field %r which isn't %r", kw['user'], value, fieldType, extra = extra)
                     raise InvalidQueryError("The value %r from field %r in filter %r is not of type %r" % (value, field, filterName, fieldType))
+
     # Passed sanity checks of data...now to build the query
-    entryFilter = MemPsafeEntry.objects.filter(safe = memSafe)
+    entryFilter = MemPsafeEntry.objects.filter(safe__in = memSafes.values())
     try:
         for field, values in include.items():
             if field == 'Old Passwords':
@@ -132,3 +161,47 @@ def filterComplex(username, password, safeID, include, exclude, **kw):
     return ret
 
 
+@rpcmethod(name = 'psafe.search.filterSafeComplex', signature = ['struct', 'string', 'string', 'int', 'struct', 'struct'])
+@auth
+def filterSafeComplex(username, password, safeID, include, exclude, **kw):
+    """ 
+    @param username: Requesting user's login
+    @type username: string
+    @param password: Requesting user's login
+    @type password: string
+    @param safeID: The PK of the PasswordSafe object
+    @type safeID: int
+    @param include: A dict indicating what fields must match and possible values to match against.  
+    @type include: A dict where keys are the fields names and the values are a list of possible values for matching entries.
+    @param exclude: A dict indicating what fields/values must NOT match.   
+    @type exclude: A dict where keys are the fields names and the values are a list of possible values for entries that should be excluded.
+    @return: A list of dicts containing all matching entries
+    @raise EntryDoesntExistError: The requested entry doesn't exist or the user doesn't have permission to read it.
+    @raise InvalidQueryError: One or more of the include/exclude field names or list of values is not valid.  
+    @note: Valid fields: PK, UUID, Group, Title, Username, Notes, Password, Creation Time, Password Last Modification Time, Last Access Time, Password Expiry, Entry Last Modification Time, URL, AutoType, Run Command, Email.  
+    """
+    # Don't use **kwargs for the RPC args as rpc4django depends on the arg names being defined
+    return _filterComplex(username = username, password = password, safeIDs = [safeID, ], include = include, exclude = exclude, **kw)
+
+
+@rpcmethod(name = 'psafe.search.filterComplex', signature = ['struct', 'string', 'string', 'list', 'struct', 'struct'])
+@auth
+def filterComplex(username, password, safeIDs, include, exclude, **kw):
+    """ 
+    @param username: Requesting user's login
+    @type username: string
+    @param password: Requesting user's login
+    @type password: string
+    @param safeIDs: The PKs of all psafe objects that should be included in the search. 
+    @type safeIDs: A list of ints
+    @param include: A dict indicating what fields must match and possible values to match against.  
+    @type include: A dict where keys are the fields names and the values are a list of possible values for matching entries.
+    @param exclude: A dict indicating what fields/values must NOT match.   
+    @type exclude: A dict where keys are the fields names and the values are a list of possible values for entries that should be excluded.
+    @return: A list of dicts containing all matching entries
+    @raise EntryDoesntExistError: The requested entry doesn't exist or the user doesn't have permission to read it.
+    @raise InvalidQueryError: One or more of the include/exclude field names or list of values is not valid.
+    @note: Valid fields: PK, UUID, Group, Title, Username, Notes, Password, Creation Time, Password Last Modification Time, Last Access Time, Password Expiry, Entry Last Modification Time, URL, AutoType, Run Command, Email.  
+    """
+    # Don't use **kwargs for the RPC args as rpc4django depends on the arg names being defined
+    return _filterComplex(username = username, password = password, safeIDs = safeIDs, include = include, exclude = exclude, **kw)
